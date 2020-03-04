@@ -567,10 +567,27 @@ pub(crate) unsafe fn write_str_simd<W>(
 where
     W: std::io::Write,
 {
-    #[cfg(target_arch = "x86")]
-    use std::arch::x86::*;
-    #[cfg(target_arch = "x86_64")]
-    use std::arch::x86_64::*;
+    use simd_lite::aarch64::*;
+    use simd_lite::NeonInit;
+
+    #[inline(always)]
+    unsafe fn bit_mask() -> uint8x16_t {
+        uint8x16_t::new([
+            0x01, 0x02, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x4, 0x8, 0x10, 0x20, 0x40,
+            0x80,
+        ])
+    }
+
+    #[inline(always)]
+    unsafe fn neon_movemask(input: uint8x16_t) -> u16 {
+        let minput: uint8x16_t = vandq_u8(input, bit_mask());
+        let tmp: uint8x16_t = vpaddq_u8(minput, minput);
+        let tmp = vpaddq_u8(tmp, tmp);
+        let tmp = vpaddq_u8(tmp, tmp);
+
+        vgetq_lane_u16(vreinterpretq_u16_u8(tmp), 0)
+    }
+
     // The case where we have a 16+ byte block
     // we repeate the same logic as above but with
     // only 16 bytes
