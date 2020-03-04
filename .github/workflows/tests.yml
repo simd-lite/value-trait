@@ -34,10 +34,6 @@ jobs:
       env:
         RUSTFLAGS: ${{ matrix.rustflags }}
       run: cargo test ${{ matrix.features }}
-    - name: Run tests (alloc)
-      if: matrix.features == ''
-      env:
-        RUSTFLAGS: ${{ matrix.rustflags }}
-      run: cargo test --features alloc
+
 
 
