@@ -580,8 +580,8 @@ where
 
     #[inline(always)]
     unsafe fn neon_movemask(input: uint8x16_t) -> u16 {
-        let minput: uint8x16_t = vandq_u8(input, bit_mask());
-        let tmp: uint8x16_t = vpaddq_u8(minput, minput);
+        let simd_input: uint8x16_t = vandq_u8(input, bit_mask());
+        let tmp: uint8x16_t = vpaddq_u8(simd_input, simd_input);
         let tmp = vpaddq_u8(tmp, tmp);
         let tmp = vpaddq_u8(tmp, tmp);
 
