@@ -18,7 +18,6 @@ jobs:
           - '-C target-cpu=native -C target-feature=-avx2'
         features:
           - ''
-          - '--features known-key'
           - '--features 128bit'
     runs-on: ${{ matrix.os }}
     steps:
