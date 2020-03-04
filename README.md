@@ -1,4 +1,4 @@
-# value-trait
+# value-trait [![Build Status]][simd-json.rs] [![Build Status ARM]][drone.io] [![Quality]][simd-json.rs]  [![Latest Version]][crates.io] [![Code Coverage]][codecov.io]
 
 [Build Status ARM]: https://cloud.drone.io/api/badges/simd-lite/value-trait/status.svg
 [drone.io]: https://cloud.drone.io/simd-lite/value-trait
