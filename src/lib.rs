@@ -394,6 +394,7 @@ pub trait Value:
     /// values into floats.
     #[must_use]
     #[inline]
+    #[allow(clippy::cast_precision_loss)]
     fn cast_f64(&self) -> Option<f64> {
         if let Some(f) = self.as_f64() {
             Some(f)
