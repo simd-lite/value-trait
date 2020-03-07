@@ -17,14 +17,14 @@ pub trait Object {
     fn get<Q: ?Sized>(&self, k: &Q) -> Option<&Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq;
+        Q: Hash + Eq + Ord;
 
     /// Gets the value of a key as a mutable reference.
     #[must_use]
     fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq;
+        Q: Hash + Eq + Ord;
 
     /// Inserts a value
     #[must_use]
@@ -39,7 +39,7 @@ pub trait Object {
     fn remove<Q: ?Sized>(&mut self, k: &Q) -> Option<Self::Element>
     where
         Self::Key: Borrow<Q>,
-        Q: Hash + Eq;
+        Q: Hash + Eq + Ord;
 
     /// Iterates over the key value paris
     #[must_use]
@@ -57,7 +57,7 @@ where
     fn get<Q: ?Sized>(&self, k: &Q) -> Option<&Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq,
+        Q: Hash + Eq + Ord,
     {
         Halfbrown::get(self, k)
     }
@@ -66,7 +66,7 @@ where
     fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq,
+        Q: Hash + Eq + Ord,
     {
         Halfbrown::get_mut(self, k)
     }
@@ -85,7 +85,7 @@ where
     fn remove<Q: ?Sized>(&mut self, k: &Q) -> Option<Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq,
+        Q: Hash + Eq + Ord,
     {
         Halfbrown::remove(self, k)
     }
@@ -106,7 +106,7 @@ where
     fn get<Q: ?Sized>(&self, k: &Q) -> Option<&Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq,
+        Q: Hash + Eq + Ord,
     {
         HashMap::get(self, k)
     }
@@ -115,7 +115,7 @@ where
     fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq,
+        Q: Hash + Eq + Ord,
     {
         HashMap::get_mut(self, k)
     }
@@ -134,7 +134,7 @@ where
     fn remove<Q: ?Sized>(&mut self, k: &Q) -> Option<Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq,
+        Q: Hash + Eq + Ord,
     {
         HashMap::remove(self, k)
     }

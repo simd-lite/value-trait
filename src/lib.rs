@@ -199,7 +199,7 @@ pub trait Value:
     fn get<Q: ?Sized>(&self, k: &Q) -> Option<&Self>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq,
+        Q: Hash + Eq + Ord,
     {
         self.as_object().and_then(|a| a.get(k))
     }
@@ -211,7 +211,7 @@ pub trait Value:
     fn contains_key<Q: ?Sized>(&self, k: &Q) -> bool
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq,
+        Q: Hash + Eq + Ord,
     {
         self.as_object().and_then(|a| a.get(k)).is_some()
     }
@@ -393,7 +393,18 @@ pub trait Value:
     /// Casts the current value to a f64 if possible, this will turn integer
     /// values into floats.
     #[must_use]
-    fn cast_f64(&self) -> Option<f64>;
+    #[inline]
+    fn cast_f64(&self) -> Option<f64> {
+        if let Some(f) = self.as_f64() {
+            Some(f)
+        } else if let Some(u) = self.as_u128() {
+            Some(u as f64)
+        } else if let Some(i) = self.as_i128() {
+            Some(i as f64)
+        } else {
+            None
+        }
+    }
     /// returns true if the current value can be cast into a f64
     #[inline]
     #[must_use]
@@ -487,7 +498,7 @@ pub trait Mutable: IndexMut<usize> + Value + Sized {
     fn remove<Q: ?Sized>(&mut self, k: &Q) -> std::result::Result<Option<Self>, AccessError>
     where
         <Self as Value>::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq,
+        Q: Hash + Eq + Ord,
     {
         self.as_object_mut()
             .ok_or(AccessError::NotAnObject)
@@ -529,7 +540,7 @@ pub trait Mutable: IndexMut<usize> + Value + Sized {
     fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut Self>
     where
         <Self as Value>::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq,
+        Q: Hash + Eq + Ord,
     {
         self.as_object_mut().and_then(|m| m.get_mut(&k))
     }
