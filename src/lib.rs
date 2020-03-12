@@ -38,6 +38,7 @@ use std::ops::{Index, IndexMut};
 mod array;
 /// Traits for serializing JSON
 pub mod generator;
+mod impls;
 mod node;
 mod object;
 
