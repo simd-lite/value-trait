@@ -11,7 +11,7 @@
 [Code Coverage]: https://codecov.io/gh/simd-lite/value-trait/badge.svg
 [codecov.io]: https://codecov.io/gh/simd-lite/value-trait
 
-**A colleciton of traits useful for representing JSONesque value.**
+**A collection of traits useful for representing JSONesque value.**
 
 ---
 
