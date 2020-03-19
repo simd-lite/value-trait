@@ -44,6 +44,24 @@ pub trait Object {
     /// Iterates over the key value paris
     #[must_use]
     fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + 'i>;
+
+    /// Iterates over the keys
+    #[must_use]
+    fn keys<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Key> + 'i>;
+
+    /// Iterates over the values
+    #[must_use]
+    fn values<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Element> + 'i>;
+
+    /// Number of key/value pairs
+    #[must_use]
+    fn len(&self) -> usize;
+
+    /// Returns if the array is empty
+    #[must_use]
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl<MapK, MapE> Object for Halfbrown<MapK, MapE>
@@ -90,8 +108,24 @@ where
         Halfbrown::remove(self, k)
     }
 
+    #[inline]
     fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + 'i> {
         Box::new(Halfbrown::iter(self))
+    }
+
+    #[inline]
+    fn keys<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Key> + 'i> {
+        Box::new(Halfbrown::keys(self))
+    }
+
+    #[inline]
+    fn values<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Element> + 'i> {
+        Box::new(Halfbrown::values(self))
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        Halfbrown::len(self)
     }
 }
 
@@ -142,5 +176,20 @@ where
     #[inline]
     fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + 'i> {
         Box::new(HashMap::iter(self))
+    }
+
+    #[inline]
+    fn keys<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Key> + 'i> {
+        Box::new(HashMap::keys(self))
+    }
+
+    #[inline]
+    fn values<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Element> + 'i> {
+        Box::new(HashMap::values(self))
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        HashMap::len(self)
     }
 }
