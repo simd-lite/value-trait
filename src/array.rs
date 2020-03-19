@@ -1,11 +1,9 @@
 use crate::Value;
-use std::ops::{Index, RangeFrom, RangeTo};
+use std::ops::Index;
 use std::slice::SliceIndex;
 
 /// Functions guaranteed for any array object
-pub trait Array:
-    Index<usize> + Index<RangeFrom<usize>> + Index<RangeTo<usize>> + Sync + Send + Clone
-{
+pub trait Array: Index<usize> + Sync + Send + Clone {
     /// Elements of the array
     type Element: Value;
 
