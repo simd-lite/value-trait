@@ -168,7 +168,6 @@ pub trait BaseGenerator {
         itoa::write(self.get_writer(), num).map(|_| ())
     }
 
-    #[cfg(feature = "128bit")]
     /// writes an integer 128 bit
     /// # Errors
     /// if the write fails
@@ -185,7 +184,6 @@ pub trait BaseGenerator {
         itoa::write(self.get_writer(), num).map(|_| ())
     }
 
-    #[cfg(feature = "128bit")]
     /// writes an unsigned 128bit integer
     /// # Errors
     /// if the write fails
