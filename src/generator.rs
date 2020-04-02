@@ -164,7 +164,7 @@ pub trait BaseGenerator {
     /// # Errors
     /// if the write fails
     #[inline(always)]
-    fn write_int(&mut self, num: i64) -> io::Result<()> {
+    fn write_int<I: itoa::Integer>(&mut self, num: I) -> io::Result<()> {
         itoa::write(self.get_writer(), num).map(|_| ())
     }
 
@@ -172,6 +172,7 @@ pub trait BaseGenerator {
     /// # Errors
     /// if the write fails
     #[inline(always)]
+    #[deprecated(since = "0.1.5", note = "Please use the write_int function instead")]
     fn write_int128(&mut self, num: i128) -> io::Result<()> {
         write!(self.get_writer(), "{}", num)
     }
@@ -180,6 +181,7 @@ pub trait BaseGenerator {
     /// # Errors
     /// if the write fails
     #[inline(always)]
+    #[deprecated(since = "0.1.5", note = "Please use the write_int function instead")]
     fn write_uint(&mut self, num: u64) -> io::Result<()> {
         itoa::write(self.get_writer(), num).map(|_| ())
     }
@@ -188,6 +190,7 @@ pub trait BaseGenerator {
     /// # Errors
     /// if the write fails
     #[inline(always)]
+    #[deprecated(since = "0.1.5", note = "Please use the write_int function instead")]
     fn write_uint128(&mut self, num: u128) -> io::Result<()> {
         write!(self.get_writer(), "{}", num)
     }

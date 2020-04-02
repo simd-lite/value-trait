@@ -9,7 +9,7 @@ description = "Traits to deal with JSONesque values"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-itoa = "0.4"
+itoa = { version = "0.4", features = ["i128"] }
 ryu = "1"
 halfbrown = "0.1"
 float-cmp = "0.6"
