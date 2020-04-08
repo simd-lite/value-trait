@@ -156,7 +156,7 @@ pub trait BaseGenerator {
     #[inline(always)]
     fn write_float(&mut self, num: f64) -> io::Result<()> {
         let mut buffer = ryu::Buffer::new();
-        let s = buffer.format(num);
+        let s = buffer.format_finite(num);
         self.get_writer().write_all(s.as_bytes())
     }
 
