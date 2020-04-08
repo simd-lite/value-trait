@@ -106,8 +106,10 @@ pub trait BaseGenerator {
         for (index, ch) in string.iter().enumerate().skip(start) {
             let escape = ESCAPED[*ch as usize];
             if escape > 0 {
-                stry!(self.write(&string[start..index]));
-                stry!(self.write(&[b'\\', escape]));
+                stry!(self.get_writer().write_vectored(&[
+                    io::IoSlice::new(&string[start..index]),
+                    io::IoSlice::new(&[b'\\', escape])
+                ]));
                 start = index + 1;
             }
             if escape == b'u' {
@@ -174,7 +176,7 @@ pub trait BaseGenerator {
     #[inline(always)]
     #[deprecated(since = "0.1.5", note = "Please use the write_int function instead")]
     fn write_int128(&mut self, num: i128) -> io::Result<()> {
-        write!(self.get_writer(), "{}", num)
+        itoa::write(self.get_writer(), num).map(|_| ())
     }
 
     /// writes an unsigned integer
@@ -192,7 +194,7 @@ pub trait BaseGenerator {
     #[inline(always)]
     #[deprecated(since = "0.1.5", note = "Please use the write_int function instead")]
     fn write_uint128(&mut self, num: u128) -> io::Result<()> {
-        write!(self.get_writer(), "{}", num)
+        itoa::write(self.get_writer(), num).map(|_| ())
     }
 }
 
