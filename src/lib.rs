@@ -233,6 +233,27 @@ pub trait Value:
     #[must_use]
     fn is_null(&self) -> bool;
 
+    /// returns true if the current value a floatingpoint number
+    #[inline]
+    #[must_use]
+    fn is_float(&self) -> bool {
+        self.is_f64()
+    }
+
+    /// returns true if the current value a integer number
+    #[inline]
+    #[must_use]
+    fn is_integer(&self) -> bool {
+        self.is_i128() || self.is_u128()
+    }
+
+    /// returns true if the current value a number either float or integer
+    #[inline]
+    #[must_use]
+    fn is_number(&self) -> bool {
+        self.is_float() || self.is_integer()
+    }
+
     /// Tries to represent the value as a bool
     #[must_use]
     fn as_bool(&self) -> Option<bool>;
