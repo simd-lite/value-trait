@@ -626,21 +626,23 @@ where
         let quote_bits = neon_movemask(vorrq_u8(bs_or_quote, in_range));
         if quote_bits != 0 {
             let quote_dist = quote_bits.trailing_zeros() as usize;
-            stry!(writer.write_all(&string[0..idx + quote_dist]).and_then(|| {
-                let ch = string[idx + quote_dist];
-                match ESCAPED[ch as usize] {
-                    b'u' => write!(writer, "\\u{:04x}", ch),
+            stry!(writer
+                .write_all(&string[0..idx + quote_dist])
+                .and_then(|_| {
+                    let ch = string[idx + quote_dist];
+                    match ESCAPED[ch as usize] {
+                        b'u' => write!(writer, "\\u{:04x}", ch),
 
-                    escape => writer.write_all(&[b'\\', escape]),
-                }
-            }));
+                        escape => writer.write_all(&[b'\\', escape]),
+                    }
+                }));
             *string = &string[idx + quote_dist + 1..];
             idx = 0;
         } else {
             idx += 16;
         }
     }
-    writer.write_all(&string[0..idx]).and_then(|| {
+    writer.write_all(&string[0..idx]).and_then(|_| {
         *string = &string[idx..];
         Ok(())
     })
