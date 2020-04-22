@@ -2,6 +2,8 @@ use halfbrown::HashMap as Halfbrown;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::hash::Hash;
+#[cfg(feature = "ordnung")]
+use ordnung::Map as Ordnung;
 
 /// A JSON Object
 pub trait Object {
@@ -191,5 +193,72 @@ where
     #[inline]
     fn len(&self) -> usize {
         HashMap::len(self)
+    }
+}
+
+
+#[cfg(feature = "ordnung")]
+impl<MapK, MapE> Object for Ordnung<MapK, MapE>
+where
+    MapK: Hash + Eq,
+{
+    type Key = MapK;
+    type Element = MapE;
+
+    #[inline]
+    fn get<Q: ?Sized>(&self, k: &Q) -> Option<&Self::Element>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        Ordnung::get(self, k)
+    }
+
+    #[inline]
+    fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut Self::Element>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        Ordnung::get_mut(self, k)
+    }
+
+    #[inline]
+    fn insert<K, V>(&mut self, k: K, v: V) -> Option<Self::Element>
+    where
+        K: Into<Self::Key>,
+        V: Into<Self::Element>,
+        Self::Key: Hash + Eq,
+    {
+        Ordnung::insert(self, k.into(), v.into())
+    }
+
+    #[inline]
+    fn remove<Q: ?Sized>(&mut self, k: &Q) -> Option<Self::Element>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        Ordnung::remove(self, k)
+    }
+
+    #[inline]
+    fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + 'i> {
+        Box::new(Ordnung::iter(self))
+    }
+
+    #[inline]
+    fn keys<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Key> + 'i> {
+        Box::new(Ordnung::keys(self))
+    }
+
+    #[inline]
+    fn values<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Element> + 'i> {
+        Box::new(Ordnung::values(self))
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        Ordnung::len(self)
     }
 }

@@ -1,6 +1,8 @@
 use crate::Value;
 use std::ops::Index;
 use std::slice::SliceIndex;
+#[cfg(feature = "ordnung")]
+use ordnung::compact::Vec as OVec;
 
 /// Functions guaranteed for any array object
 pub trait Array: Index<usize> + Sync + Send + Clone {
@@ -68,6 +70,44 @@ where
     #[inline]
     fn push(&mut self, e: T) {
         Vec::push(self, e)
+    }
+
+    fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = &T> + 'i> {
+        Box::new(<[T]>::iter(self))
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        self.len()
+    }
+}
+
+#[cfg(feature = "ordnung")]
+impl<T> Array for OVec<T>
+where
+    T: Value + Sync + Send + Clone,
+{
+    type Element = T;
+    #[inline]
+    fn get<I>(&self, i: I) -> Option<&<I as SliceIndex<[T]>>::Output>
+    where
+        I: SliceIndex<[T]>,
+    {
+        <[T]>::get(self, i)
+    }
+    #[inline]
+    fn get_mut(&mut self, i: usize) -> Option<&mut T> {
+        <[T]>::get_mut(self, i)
+    }
+
+    #[inline]
+    fn pop(&mut self) -> Option<T> {
+        OVec::pop(self)
+    }
+
+    #[inline]
+    fn push(&mut self, e: T) {
+        OVec::push(self, e)
     }
 
     fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = &T> + 'i> {
