@@ -13,11 +13,9 @@ itoa = { version = "0.4", features = ["i128"] }
 ryu = "1"
 halfbrown = "0.1"
 float-cmp = "0.6"
-simd-lite = { version = "0.1.0", optional = true }
 
 [features]
 # Support for 128 bit integers
 128bit = []
 
-# Support for ARM NEON SIMD
-neon = ["simd-lite"]
+neon = []

@@ -576,19 +576,19 @@ where
     })
 }
 
-#[cfg(target_feature = "neon")]
+#[cfg(all(target_arch = "aarch64", feature = "neon"))]
 #[inline(always)]
 pub(crate) unsafe fn write_str_simd<W>(writer: &mut W, string: &mut &[u8]) -> io::Result<()>
 where
     W: std::io::Write,
 {
-    use simd_lite::aarch64::*;
-    use simd_lite::NeonInit;
+    use std::arch::aarch64::*;
+    use std::mem;
 
     #[inline(always)]
     unsafe fn bit_mask() -> uint8x16_t {
-        uint8x16_t::new([
-            0x01, 0x02, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x4, 0x8, 0x10, 0x20, 0x40,
+        mem::transmute([
+            0x01_u8, 0x02, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x4, 0x8, 0x10, 0x20, 0x40,
             0x80,
         ])
     }
