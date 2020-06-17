@@ -469,9 +469,15 @@ where
     W: std::io::Write,
 {
     #[cfg(target_arch = "x86")]
-    use std::arch::x86::*;
+    use std::arch::x86::{
+        __m256i, _mm256_and_si256, _mm256_cmpeq_epi8, _mm256_loadu_si256, _mm256_movemask_epi8,
+        _mm256_or_si256, _mm256_set1_epi8, _mm256_xor_si256,
+    };
     #[cfg(target_arch = "x86_64")]
-    use std::arch::x86_64::*;
+    use std::arch::x86_64::{
+        __m256i, _mm256_and_si256, _mm256_cmpeq_epi8, _mm256_loadu_si256, _mm256_movemask_epi8,
+        _mm256_or_si256, _mm256_set1_epi8, _mm256_xor_si256,
+    };
 
     let mut idx = 0;
     let zero = _mm256_set1_epi8(0);
