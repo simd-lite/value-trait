@@ -18,7 +18,7 @@ use std::io::Write;
 use std::marker::PhantomData;
 use std::ptr;
 
-use crate::*;
+use crate::Value;
 
 const QU: u8 = b'"';
 const BS: u8 = b'\\';
@@ -529,9 +529,15 @@ where
     W: std::io::Write,
 {
     #[cfg(target_arch = "x86")]
-    use std::arch::x86::*;
+    use std::arch::x86::{
+        __m128i, _mm_and_si128, _mm_cmpeq_epi8, _mm_loadu_si128, _mm_movemask_epi8, _mm_or_si128,
+        _mm_set1_epi8, _mm_xor_si128,
+    };
     #[cfg(target_arch = "x86_64")]
-    use std::arch::x86_64::*;
+    use std::arch::x86_64::{
+        __m128i, _mm_and_si128, _mm_cmpeq_epi8, _mm_loadu_si128, _mm_movemask_epi8, _mm_or_si128,
+        _mm_set1_epi8, _mm_xor_si128,
+    };
 
     let mut idx = 0;
     let zero = _mm_set1_epi8(0);
