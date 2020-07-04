@@ -1,21 +1,6 @@
 //! A crate providing generalised value traits for working with
 //! `JSONesque` values.
-
-#![cfg_attr(
-    target_feature = "neon",
-    feature(
-        asm,
-        stdsimd,
-        repr_simd,
-        custom_inner_attributes,
-        aarch64_target_feature,
-        platform_intrinsics,
-        stmt_expr_attributes,
-        simd_ffi,
-        link_llvm_intrinsics,
-        rustc_attrs,
-    )
-)]
+#![cfg_attr(target_feature = "neon", feature(stdsimd,))]
 #![forbid(warnings)]
 #![warn(unused_extern_crates)]
 #![deny(
