@@ -101,23 +101,20 @@ pub trait BaseGenerator {
     /// if the write fails
     #[inline(never)]
     fn write_string_complex(&mut self, string: &[u8], mut start: usize) -> io::Result<()> {
-        self.write(&string[..start]).and_then(|_| {
-            for (index, ch) in string.iter().enumerate().skip(start) {
-                let escape = ESCAPED[*ch as usize];
-                if escape > 0 {
-                    stry!(self
-                        .write(&string[start..index])
-                        .and_then(|_| self.write(&[b'\\', escape]))
-                        .and_then(|_| if escape == b'u' {
-                            write!(self.get_writer(), "{:04x}", ch)
-                        } else {
-                            Ok(())
-                        }));
-                    start = index + 1;
-                }
+        stry!(self.write(&string[..start]));
+
+        for (index, ch) in string.iter().enumerate().skip(start) {
+            let escape = ESCAPED[*ch as usize];
+            if escape > 0 {
+                stry!(self.write(&string[start..index]));
+                stry!(self.write(&[b'\\', escape]));
+                if escape == b'u' {
+                    stry!(write!(self.get_writer(), "{:04x}", ch))
+                };
+                start = index + 1;
             }
-            self.write(&string[start..])
-        })
+        }
+        self.write(&string[start..])
     }
 
     /// writes a string
@@ -125,26 +122,25 @@ pub trait BaseGenerator {
     /// if the write fails
     #[inline(always)]
     fn write_string(&mut self, string: &str) -> io::Result<()> {
-        self.write_char(b'"').and_then(|_| {
-            let mut string = string.as_bytes();
+        stry!(self.write_char(b'"'));
+        let mut string = string.as_bytes();
 
-            unsafe {
-                // Looking at the table above the lower 5 bits are entirely
-                // quote characters that gives us a bitmask of 0x1f for that
-                // region, only quote (`"`) and backslash (`\`) are not in
-                // this range.
-                stry!(write_str_simd(self.get_writer(), &mut string,));
+        unsafe {
+            // Looking at the table above the lower 5 bits are entirely
+            // quote characters that gives us a bitmask of 0x1f for that
+            // region, only quote (`"`) and backslash (`\`) are not in
+            // this range.
+            stry!(write_str_simd(self.get_writer(), &mut string,));
+        }
+        // Legacy code to handle the remainder of the code
+        for (index, ch) in string.iter().enumerate() {
+            if ESCAPED[*ch as usize] > 0 {
+                stry!(self.write_string_complex(string, index));
+                return self.write_char(b'"');
             }
-            // Legacy code to handle the remainder of the code
-            for (index, ch) in string.iter().enumerate() {
-                if ESCAPED[*ch as usize] > 0 {
-                    return self
-                        .write_string_complex(string, index)
-                        .and_then(|_| self.write_char(b'"'));
-                }
-            }
-            self.write(string).and_then(|_| self.write_char(b'"'))
-        })
+        }
+        stry!(self.write(string));
+        self.write_char(b'"')
     }
 
     /// writes a simple string (usually short and non escaped)
@@ -154,19 +150,19 @@ pub trait BaseGenerator {
     /// if the write fails
     #[inline(always)]
     fn write_simple_string(&mut self, string: &str) -> io::Result<()> {
-        self.write_char(b'"').and_then(|_| {
-            let string = string.as_bytes();
-            // Legacy code to handle the remainder of the code
-            for (index, ch) in string.iter().enumerate() {
-                if ESCAPED[*ch as usize] > 0 {
-                    return self
-                        .write_string_complex(string, index)
-                        .and_then(|_| self.write_char(b'"'));
-                }
-            }
+        stry!(self.write_char(b'"'));
 
-            self.write(string).and_then(|_| self.write_char(b'"'))
-        })
+        let string = string.as_bytes();
+        // Legacy code to handle the remainder of the code
+        for (index, ch) in string.iter().enumerate() {
+            if ESCAPED[*ch as usize] > 0 {
+                stry!(self.write_string_complex(string, index));
+                return self.write_char(b'"');
+            }
+        }
+
+        stry!(self.write(string));
+        self.write_char(b'"')
     }
 
     /// writes a float value
@@ -425,12 +421,11 @@ where
     }
 
     fn new_line(&mut self) -> io::Result<()> {
-        self.write_char(b'\n').and_then(|_| {
-            for _ in 0..(self.dent * self.spaces_per_indent) {
-                stry!(self.write_char(b' '));
-            }
-            Ok(())
-        })
+        stry!(self.write_char(b'\n'));
+        for _ in 0..(self.dent * self.spaces_per_indent) {
+            stry!(self.write_char(b' '));
+        }
+        Ok(())
     }
 
     fn indent(&mut self) {
@@ -504,24 +499,21 @@ where
             idx += 32;
         } else {
             let quote_dist = quote_bits.trailing_zeros() as usize;
-            stry!(writer
-                .write_all(&string[0..idx + quote_dist])
-                .and_then(|_| {
-                    let ch = string[idx + quote_dist];
-                    match ESCAPED[ch as usize] {
-                        b'u' => write!(writer, "\\u{:04x}", ch),
+            stry!(writer.write_all(&string[0..idx + quote_dist]));
 
-                        escape => writer.write_all(&[b'\\', escape]),
-                    }
-                }));
+            let ch = string[idx + quote_dist];
+            match ESCAPED[ch as usize] {
+                b'u' => stry!(write!(writer, "\\u{:04x}", ch)),
+                escape => stry!(writer.write_all(&[b'\\', escape])),
+            };
+
             *string = &string[idx + quote_dist + 1..];
             idx = 0;
         }
     }
-    writer.write_all(&string[0..idx]).and_then(|_| {
-        *string = &string[idx..];
-        Ok(())
-    })
+    stry!(writer.write_all(&string[0..idx]));
+    *string = &string[idx..];
+    Ok(())
 }
 
 #[cfg(all(
@@ -568,24 +560,21 @@ where
             idx += 16;
         } else {
             let quote_dist = quote_bits.trailing_zeros() as usize;
-            stry!(writer
-                .write_all(&string[0..idx + quote_dist])
-                .and_then(|_| {
-                    let ch = string[idx + quote_dist];
-                    match ESCAPED[ch as usize] {
-                        b'u' => write!(writer, "\\u{:04x}", ch),
+            stry!(writer.write_all(&string[0..idx + quote_dist]));
 
-                        escape => writer.write_all(&[b'\\', escape]),
-                    }
-                }));
+            let ch = string[idx + quote_dist];
+            match ESCAPED[ch as usize] {
+                b'u' => stry!(write!(writer, "\\u{:04x}", ch)),
+                escape => stry!(writer.write_all(&[b'\\', escape])),
+            }
+
             *string = &string[idx + quote_dist + 1..];
             idx = 0;
         }
     }
-    writer.write_all(&string[0..idx]).and_then(|_| {
-        *string = &string[idx..];
-        Ok(())
-    })
+    stry!(writer.write_all(&string[0..idx]));
+    *string = &string[idx..];
+    Ok(())
 }
 
 #[cfg(all(target_arch = "aarch64", feature = "neon"))]
@@ -638,24 +627,21 @@ where
         let quote_bits = neon_movemask(vorrq_u8(bs_or_quote, in_range));
         if quote_bits != 0 {
             let quote_dist = quote_bits.trailing_zeros() as usize;
-            stry!(writer
-                .write_all(&string[0..idx + quote_dist])
-                .and_then(|_| {
-                    let ch = string[idx + quote_dist];
-                    match ESCAPED[ch as usize] {
-                        b'u' => write!(writer, "\\u{:04x}", ch),
+            stry!(writer.write_all(&string[0..idx + quote_dist]));
+            let ch = string[idx + quote_dist];
+            match ESCAPED[ch as usize] {
+                b'u' => stry!(write!(writer, "\\u{:04x}", ch)),
 
-                        escape => writer.write_all(&[b'\\', escape]),
-                    }
-                }));
+                escape => stry!(writer.write_all(&[b'\\', escape])),
+            }
+
             *string = &string[idx + quote_dist + 1..];
             idx = 0;
         } else {
             idx += 16;
         }
     }
-    writer.write_all(&string[0..idx]).and_then(|_| {
-        *string = &string[idx..];
-        Ok(())
-    })
+    stry!(writer.write_all(&string[0..idx]));
+    *string = &string[idx..];
+    Ok(())
 }
