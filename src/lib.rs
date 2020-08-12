@@ -5,7 +5,7 @@
 #![warn(unused_extern_crates)]
 #![deny(
     clippy::all,
-    clippy::result_unwrap_used,
+    clippy::unwrap_used,
     clippy::unnecessary_unwrap,
     clippy::pedantic
 )]
@@ -43,7 +43,7 @@ pub enum AccessError {
     NotAnArray,
 }
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 impl fmt::Display for AccessError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
