@@ -14,23 +14,23 @@ jobs:
           - windows-latest
           - macOS-latest
         rustflags:
-          - '-C target-cpu=native'
-          - '-C target-cpu=native -C target-feature=-avx2'
+          - "-C target-cpu=native"
+          - "-C target-cpu=native -C target-feature=-avx2"
         features:
-          - ''
-          - '--features 128bit'
+          - ""
+          - "--features 128bit"
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v1
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: ${{ matrix.rust }}
-        override: true
-    - name: Build
-      env:
-        RUSTFLAGS: ${{ matrix.rustflags }}
-      run: cargo build ${{ matrix.features }}
-    - name: Run tests
-      env:
-        RUSTFLAGS: ${{ matrix.rustflags }}
-      run: cargo test ${{ matrix.features }}
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - name: Build
+        env:
+          RUSTFLAGS: ${{ matrix.rustflags }}
+        run: cargo build ${{ matrix.features }}
+      - name: Run tests
+        env:
+          RUSTFLAGS: ${{ matrix.rustflags }}
+        run: cargo test ${{ matrix.features }}

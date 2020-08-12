@@ -239,7 +239,7 @@ impl Value for StaticNode {
     }
 }
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 impl<'v> fmt::Display for StaticNode {
     #[cfg(not(feature = "128bit"))]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

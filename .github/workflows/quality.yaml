@@ -30,87 +30,69 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Install deps
-        run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config cmake zlib1g-dev
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
-      - name: install tarpaulin
-        run: bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
-      - name: run tarpaulin
+      - name: Run cargo-tarpaulin
+        uses: actions-rs/tarpaulin@v0.1
         env:
           RUSTFLAGS: "-C target-cpu=native -C target-feature=-avx2"
           PROPTEST_CASES: 512
-        run: cargo tarpaulin -v --out Xml && cp cobertura.xml sse.xml
+        with:
+          version: "0.14.2"
       - uses: codecov/codecov-action@v1.0.2
         with:
           token: ${{secrets.CODECOV_TOKEN}} #required
-          file: ./sse.xml
+          file: ./cobertura.xml
           flags: sse
   tarpaulin-avx2:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Install deps
-        run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config cmake zlib1g-dev
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: install tarpaulin
-        run: bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
-      - name: run tarpaulin
+      - name: Run cargo-tarpaulin
+        uses: actions-rs/tarpaulin@v0.1
         env:
           RUSTFLAGS: "-C target-cpu=native"
           PROPTEST_CASES: 512
-        run: cargo tarpaulin -v --out Xml && cp cobertura.xml avx.xml
+        with:
+          version: "0.14.2"
       - uses: codecov/codecov-action@v1.0.2
         with:
           token: ${{secrets.CODECOV_TOKEN}} #required
-          file: ./avx.xml
+          file: ./cobertura.xml
           flags: avx2
   tarpaulin-sse-known-key:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Install deps
-        run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config cmake zlib1g-dev
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: install tarpaulin
-        run: bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
-      - name: run tarpaulin
+      - name: Run cargo-tarpaulin
+        uses: actions-rs/tarpaulin@v0.1
         env:
           RUSTFLAGS: "-C target-cpu=native -C target-feature=-avx2"
           PROPTEST_CASES: 512
-        run: cargo tarpaulin -v --features 128bit --out Xml && cp cobertura.xml sse-known-key.xml
+        with:
+          version: "0.14.2"
+          args: "--features 128bit"
       - uses: codecov/codecov-action@v1.0.2
         with:
           token: ${{secrets.CODECOV_TOKEN}} #required
-          file: ./sse-known-key.xml
+          file: ./cobertura.xml
           flags: sseKnownKey
   tarpaulin-avx2-known-key:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Install deps
-        run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config cmake zlib1g-dev
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: install tarpaulin
-        run: bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
-      - name: run tarpaulin
+      - name: Run cargo-tarpaulin
+        uses: actions-rs/tarpaulin@v0.1
         env:
           RUSTFLAGS: "-C target-cpu=native"
           PROPTEST_CASES: 512
-        run: cargo tarpaulin -v --features 128bit --out Xml && cp cobertura.xml avx2-known-key.xml
+        with:
+          version: "0.14.2"
+          args: "--features 128bit"
       - uses: codecov/codecov-action@v1.0.2
         with:
           token: ${{secrets.CODECOV_TOKEN}} #required
-          file: ./avx2-known-key.xml
+          file: ./cobertura.xml
           flags: avx2KnownKey
