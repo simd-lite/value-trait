@@ -51,6 +51,25 @@ pub(crate) static ESCAPED: [u8; 256] = [
     __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // F
 ];
 
+// taken from https://github.com/serde-rs/json/blob/4354fc3eb2232ee0ba9a9a23acce107a980a6dc0/src/ser.rs#L1790
+// This is called rarely
+#[inline(never)]
+fn u_encode<W>(w: &mut W, byte: u8) -> io::Result<()>
+where
+    W: Write,
+{
+    static HEX_DIGITS: [u8; 16] = *b"0123456789abcdef";
+    let bytes = &[
+        b'\\',
+        b'u',
+        b'0',
+        b'0',
+        HEX_DIGITS[(byte >> 4) as usize],
+        HEX_DIGITS[(byte & 0xF) as usize],
+    ];
+    w.write_all(bytes)
+}
+
 /// Base generator trait
 pub trait BaseGenerator {
     /// The writer
@@ -107,9 +126,10 @@ pub trait BaseGenerator {
             let escape = ESCAPED[*ch as usize];
             if escape > 0 {
                 stry!(self.write(&string[start..index]));
-                stry!(self.write(&[b'\\', escape]));
                 if escape == b'u' {
-                    stry!(write!(self.get_writer(), "{:04x}", ch))
+                    stry!(u_encode(self.get_writer(), *ch))
+                } else {
+                    stry!(self.write(&[b'\\', escape]));
                 };
                 start = index + 1;
             }
@@ -123,6 +143,15 @@ pub trait BaseGenerator {
     #[inline(always)]
     fn write_string(&mut self, string: &str) -> io::Result<()> {
         stry!(self.write_char(b'"'));
+        stry!(self.write_string_content(string));
+        self.write_char(b'"')
+    }
+
+    /// writes a string
+    /// # Errors
+    /// if the write fails
+    #[inline(always)]
+    fn write_string_content(&mut self, string: &str) -> io::Result<()> {
         let mut string = string.as_bytes();
 
         unsafe {
@@ -139,8 +168,7 @@ pub trait BaseGenerator {
                 return self.write_char(b'"');
             }
         }
-        stry!(self.write(string));
-        self.write_char(b'"')
+        self.write(string)
     }
 
     /// writes a simple string (usually short and non escaped)
@@ -253,6 +281,7 @@ impl<VT: Value> DumpGenerator<VT> {
 impl<VT: Value> BaseGenerator for DumpGenerator<VT> {
     type T = Vec<u8>;
 
+    #[inline(always)]
     fn write(&mut self, slice: &[u8]) -> io::Result<()> {
         extend_from_slice(&mut self.code, slice);
         Ok(())
@@ -507,20 +536,20 @@ where
             idx += 32;
         } else {
             let quote_dist = quote_bits.trailing_zeros() as usize;
-            stry!(writer.write_all(&string[0..idx + quote_dist]));
+            stry!(writer.write_all(string.get_unchecked(0..idx + quote_dist)));
 
             let ch = string[idx + quote_dist];
             match ESCAPED[ch as usize] {
-                b'u' => stry!(write!(writer, "\\u{:04x}", ch)),
+                b'u' => stry!(u_encode(writer, ch)),
                 escape => stry!(writer.write_all(&[b'\\', escape])),
             };
 
-            *string = &string[idx + quote_dist + 1..];
+            *string = string.get_unchecked(idx + quote_dist + 1..);
             idx = 0;
         }
     }
     stry!(writer.write_all(&string[0..idx]));
-    *string = &string[idx..];
+    *string = string.get_unchecked(idx..);
     Ok(())
 }
 
@@ -572,7 +601,7 @@ where
 
             let ch = string[idx + quote_dist];
             match ESCAPED[ch as usize] {
-                b'u' => stry!(write!(writer, "\\u{:04x}", ch)),
+                b'u' => stry!(u_encode(writer, ch)),
                 escape => stry!(writer.write_all(&[b'\\', escape])),
             }
 
@@ -638,8 +667,7 @@ where
             stry!(writer.write_all(&string[0..idx + quote_dist]));
             let ch = string[idx + quote_dist];
             match ESCAPED[ch as usize] {
-                b'u' => stry!(write!(writer, "\\u{:04x}", ch)),
-
+                b'u' => stry!(u_encode(writer, *ch)),
                 escape => stry!(writer.write_all(&[b'\\', escape])),
             }
 
