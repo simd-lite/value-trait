@@ -152,17 +152,25 @@ pub trait BaseGenerator {
     fn write_simple_string(&mut self, string: &str) -> io::Result<()> {
         stry!(self.write_char(b'"'));
 
+        stry!(self.write_simple_str_content(string));
+        self.write_char(b'"')
+    }
+
+    /// writes a simple string content  (usually short and non escaped)
+    /// This means we can skip the simd accelerated writing which is
+    /// expensive on short strings.
+    /// # Errors
+    /// if the write fails
+    #[inline(always)]
+    fn write_simple_str_content(&mut self, string: &str) -> io::Result<()> {
         let string = string.as_bytes();
         // Legacy code to handle the remainder of the code
         for (index, ch) in string.iter().enumerate() {
             if ESCAPED[*ch as usize] > 0 {
-                stry!(self.write_string_complex(string, index));
-                return self.write_char(b'"');
+                return self.write_string_complex(string, index);
             }
         }
-
-        stry!(self.write(string));
-        self.write_char(b'"')
+        self.write(string)
     }
 
     /// writes a float value
