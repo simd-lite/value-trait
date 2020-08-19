@@ -165,7 +165,6 @@ pub trait BaseGenerator {
         for (index, ch) in string.iter().enumerate() {
             if ESCAPED[*ch as usize] > 0 {
                 stry!(self.write_string_complex(string, index));
-                return self.write_char(b'"');
             }
         }
         self.write(string)
