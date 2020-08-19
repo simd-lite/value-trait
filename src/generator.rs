@@ -59,15 +59,15 @@ where
     W: Write,
 {
     static HEX_DIGITS: [u8; 16] = *b"0123456789abcdef";
-    let bytes = &[
+    let bytes = [
         b'\\',
         b'u',
         b'0',
         b'0',
-        HEX_DIGITS[(byte >> 4) as usize],
-        HEX_DIGITS[(byte & 0xF) as usize],
+        HEX_DIGITS[dbg!((byte >> 4) as usize)],
+        HEX_DIGITS[dbg!((byte & 0xF) as usize)],
     ];
-    w.write_all(bytes)
+    w.write_all(&bytes)
 }
 
 /// Base generator trait
@@ -164,7 +164,7 @@ pub trait BaseGenerator {
         // Legacy code to handle the remainder of the code
         for (index, ch) in string.iter().enumerate() {
             if ESCAPED[*ch as usize] > 0 {
-                stry!(self.write_string_complex(string, index));
+                return self.write_string_complex(string, index);
             }
         }
         self.write(string)
