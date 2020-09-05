@@ -64,8 +64,8 @@ where
         b'u',
         b'0',
         b'0',
-        HEX_DIGITS[dbg!((byte >> 4) as usize)],
-        HEX_DIGITS[dbg!((byte & 0xF) as usize)],
+        HEX_DIGITS[(byte >> 4) as usize],
+        HEX_DIGITS[(byte & 0xF) as usize],
     ];
     w.write_all(&bytes)
 }
