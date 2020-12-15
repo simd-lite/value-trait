@@ -12,7 +12,7 @@ description = "Traits to deal with JSONesque values"
 itoa = { version = "0.4", features = ["i128"] }
 ryu = "1"
 halfbrown = "0.1"
-float-cmp = "0.7"
+float-cmp = "0.8"
 
 [features]
 # Support for 128 bit integers
