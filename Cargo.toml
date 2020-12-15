@@ -18,4 +18,8 @@ float-cmp = "0.7"
 # Support for 128 bit integers
 128bit = []
 
+# Support for custom types
+custom-types = []
+
 neon = []
+

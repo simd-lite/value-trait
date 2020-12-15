@@ -79,6 +79,9 @@ pub enum ValueType {
     Array,
     /// an object
     Object,
+    #[cfg(feature = "custom-types")]
+    /// a custom type
+    Custom(&'static str),
 }
 
 /// A Value that can be serialized and written
@@ -470,6 +473,12 @@ pub trait Value:
     #[must_use]
     fn is_object(&self) -> bool {
         self.as_object().is_some()
+    }
+
+    #[cfg(feature = "custom-types")]
+    /// returns if a type is a custom type
+    fn is_custom(&self) -> bool {
+        false
     }
 }
 
