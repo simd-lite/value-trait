@@ -666,7 +666,7 @@ where
             stry!(writer.write_all(&string[0..idx + quote_dist]));
             let ch = string[idx + quote_dist];
             match ESCAPED[ch as usize] {
-                b'u' => stry!(u_encode(writer, *ch)),
+                b'u' => stry!(u_encode(writer, ch)),
                 escape => stry!(writer.write_all(&[b'\\', escape])),
             }
 
