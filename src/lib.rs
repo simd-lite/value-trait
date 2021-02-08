@@ -1,7 +1,6 @@
 //! A crate providing generalised value traits for working with
 //! `JSONesque` values.
-#![cfg_attr(target_feature = "neon", feature(stdsimd,))]
-#![forbid(warnings)]
+#![cfg_attr(target_arch = "aarch64", feature(stdsimd,))]
 #![warn(unused_extern_crates)]
 #![deny(
     clippy::all,
@@ -9,6 +8,7 @@
     clippy::unnecessary_unwrap,
     clippy::pedantic
 )]
+#![forbid(warnings)]
 // We might want to revisit inline_always
 #![allow(clippy::module_name_repetitions, clippy::inline_always)]
 #![deny(missing_docs)]
@@ -403,7 +403,7 @@ pub trait Value:
     /// values into floats.
     #[must_use]
     #[inline]
-    #[allow(clippy::cast_precision_loss)]
+    #[allow(clippy::cast_precision_loss, clippy::option_if_let_else)]
     fn cast_f64(&self) -> Option<f64> {
         if let Some(f) = self.as_f64() {
             Some(f)
