@@ -246,10 +246,22 @@ pub trait Value:
     #[must_use]
     fn as_bool(&self) -> Option<bool>;
     /// returns true if the current value a bool
+
     #[inline]
     #[must_use]
     fn is_bool(&self) -> bool {
         self.as_bool().is_some()
+    }
+
+    /// Tries to get an element of an object as a bool
+    #[inline]
+    #[must_use]
+    fn get_bool<Q: ?Sized>(&self, k: &Q) -> Option<bool>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_bool)
     }
 
     /// Tries to represent the value as an i128
