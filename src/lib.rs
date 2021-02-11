@@ -258,6 +258,18 @@ pub trait Value:
     fn as_i128(&self) -> Option<i128> {
         self.as_i64().and_then(|u| u.try_into().ok())
     }
+
+    /// Tries to get an element of an object as a i128
+    #[inline]
+    #[must_use]
+    fn get_i128<Q: ?Sized>(&self, k: &Q) -> Option<i128>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_i128)
+    }
+
     /// returns true if the current value can be represented as a i128
     #[inline]
     #[must_use]
@@ -268,11 +280,23 @@ pub trait Value:
     /// Tries to represent the value as an i64
     #[must_use]
     fn as_i64(&self) -> Option<i64>;
+
     /// returns true if the current value can be represented as a i64
     #[inline]
     #[must_use]
     fn is_i64(&self) -> bool {
         self.as_i64().is_some()
+    }
+
+    /// Tries to get an element of an object as a i64
+    #[inline]
+    #[must_use]
+    fn get_i64<Q: ?Sized>(&self, k: &Q) -> Option<i64>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_i64)
     }
 
     /// Tries to represent the value as an i32
@@ -281,11 +305,23 @@ pub trait Value:
     fn as_i32(&self) -> Option<i32> {
         self.as_i64().and_then(|u| u.try_into().ok())
     }
+
     /// returns true if the current value can be represented as a i32
     #[inline]
     #[must_use]
     fn is_i32(&self) -> bool {
         self.as_i32().is_some()
+    }
+
+    /// Tries to get an element of an object as a i32
+    #[inline]
+    #[must_use]
+    fn get_i32<Q: ?Sized>(&self, k: &Q) -> Option<i32>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_i32)
     }
 
     /// Tries to represent the value as an i16
@@ -294,11 +330,23 @@ pub trait Value:
     fn as_i16(&self) -> Option<i16> {
         self.as_i64().and_then(|u| u.try_into().ok())
     }
+
     /// returns true if the current value can be represented as a i16
     #[inline]
     #[must_use]
     fn is_i16(&self) -> bool {
         self.as_i16().is_some()
+    }
+
+    /// Tries to get an element of an object as a i16
+    #[inline]
+    #[must_use]
+    fn get_i16<Q: ?Sized>(&self, k: &Q) -> Option<i16>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_i16)
     }
 
     /// Tries to represent the value as an i8
@@ -307,11 +355,23 @@ pub trait Value:
     fn as_i8(&self) -> Option<i8> {
         self.as_i64().and_then(|u| u.try_into().ok())
     }
+
     /// returns true if the current value can be represented as a i8
     #[inline]
     #[must_use]
     fn is_i8(&self) -> bool {
         self.as_i8().is_some()
+    }
+
+    /// Tries to get an element of an object as a i8
+    #[inline]
+    #[must_use]
+    fn get_i8<Q: ?Sized>(&self, k: &Q) -> Option<i8>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_i8)
     }
 
     /// Tries to represent the value as an u128
@@ -327,6 +387,17 @@ pub trait Value:
         self.as_u128().is_some()
     }
 
+    /// Tries to get an element of an object as a u128
+    #[inline]
+    #[must_use]
+    fn get_u128<Q: ?Sized>(&self, k: &Q) -> Option<u128>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_u128)
+    }
+
     /// Tries to represent the value as an u64
     #[must_use]
     fn as_u64(&self) -> Option<u64>;
@@ -338,17 +409,40 @@ pub trait Value:
         self.as_u64().is_some()
     }
 
+    /// Tries to get an element of an object as a u64
+    #[inline]
+    #[must_use]
+    fn get_u64<Q: ?Sized>(&self, k: &Q) -> Option<u64>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_u64)
+    }
+
     /// Tries to represent the value as an usize
     #[inline]
     #[must_use]
     fn as_usize(&self) -> Option<usize> {
         self.as_u64().and_then(|u| u.try_into().ok())
     }
+
     /// returns true if the current value can be represented as a usize
     #[inline]
     #[must_use]
     fn is_usize(&self) -> bool {
         self.as_usize().is_some()
+    }
+
+    /// Tries to get an element of an object as a usize
+    #[inline]
+    #[must_use]
+    fn get_usize<Q: ?Sized>(&self, k: &Q) -> Option<usize>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_usize)
     }
 
     /// Tries to represent the value as an u32
@@ -357,11 +451,23 @@ pub trait Value:
     fn as_u32(&self) -> Option<u32> {
         self.as_u64().and_then(|u| u.try_into().ok())
     }
+
     /// returns true if the current value can be represented as a u32
     #[inline]
     #[must_use]
     fn is_u32(&self) -> bool {
         self.as_u32().is_some()
+    }
+
+    /// Tries to get an element of an object as a u32
+    #[inline]
+    #[must_use]
+    fn get_u32<Q: ?Sized>(&self, k: &Q) -> Option<u32>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_u32)
     }
 
     /// Tries to represent the value as an u16
@@ -370,11 +476,23 @@ pub trait Value:
     fn as_u16(&self) -> Option<u16> {
         self.as_u64().and_then(|u| u.try_into().ok())
     }
+
     /// returns true if the current value can be represented as a u16
     #[inline]
     #[must_use]
     fn is_u16(&self) -> bool {
         self.as_u16().is_some()
+    }
+
+    /// Tries to get an element of an object as a u16
+    #[inline]
+    #[must_use]
+    fn get_u16<Q: ?Sized>(&self, k: &Q) -> Option<u16>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_u16)
     }
 
     /// Tries to represent the value as an u8
@@ -383,6 +501,7 @@ pub trait Value:
     fn as_u8(&self) -> Option<u8> {
         self.as_u64().and_then(|u| u.try_into().ok())
     }
+
     /// returns true if the current value can be represented as a u8
     #[inline]
     #[must_use]
@@ -390,15 +509,39 @@ pub trait Value:
         self.as_u8().is_some()
     }
 
+    /// Tries to get an element of an object as a u8
+    #[inline]
+    #[must_use]
+    fn get_u8<Q: ?Sized>(&self, k: &Q) -> Option<u8>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_u8)
+    }
+
     /// Tries to represent the value as a f64
     #[must_use]
     fn as_f64(&self) -> Option<f64>;
+
     /// returns true if the current value can be represented as a f64
     #[inline]
     #[must_use]
     fn is_f64(&self) -> bool {
         self.as_f64().is_some()
     }
+
+    /// Tries to get an element of an object as a f64
+    #[inline]
+    #[must_use]
+    fn get_f64<Q: ?Sized>(&self, k: &Q) -> Option<f64>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_f64)
+    }
+
     /// Casts the current value to a f64 if possible, this will turn integer
     /// values into floats.
     #[must_use]
@@ -436,6 +579,7 @@ pub trait Value:
             }
         })
     }
+
     /// returns true if the current value can be represented as a f64
     #[inline]
     #[must_use]
@@ -443,14 +587,37 @@ pub trait Value:
         self.as_f32().is_some()
     }
 
+    /// Tries to get an element of an object as a f32
+    #[inline]
+    #[must_use]
+    fn get_f32<Q: ?Sized>(&self, k: &Q) -> Option<f32>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_f32)
+    }
+
     /// Tries to represent the value as a &str
     #[must_use]
     fn as_str(&self) -> Option<&str>;
     /// returns true if the current value can be represented as a str
+
     #[inline]
     #[must_use]
     fn is_str(&self) -> bool {
         self.as_str().is_some()
+    }
+
+    /// Tries to get an element of an object as a str
+    #[inline]
+    #[must_use]
+    fn get_str<Q: ?Sized>(&self, k: &Q) -> Option<&str>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_str)
     }
 
     /// Tries to represent the value as an array and returns a refference to it
@@ -464,6 +631,17 @@ pub trait Value:
         self.as_array().is_some()
     }
 
+    /// Tries to get an element of an object as a array
+    #[inline]
+    #[must_use]
+    fn get_array<Q: ?Sized>(&self, k: &Q) -> Option<&Self::Array>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_array)
+    }
+
     /// Tries to represent the value as an object and returns a refference to it
     #[must_use]
     fn as_object(&self) -> Option<&Self::Object>;
@@ -473,6 +651,17 @@ pub trait Value:
     #[must_use]
     fn is_object(&self) -> bool {
         self.as_object().is_some()
+    }
+
+    /// Tries to get an element of an object as a object
+    #[inline]
+    #[must_use]
+    fn get_object<Q: ?Sized>(&self, k: &Q) -> Option<&Self::Object>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.get(k).and_then(Value::as_object)
     }
 
     #[cfg(feature = "custom-types")]
