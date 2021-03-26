@@ -99,73 +99,6 @@ impl Value for StaticNode {
     fn is_null(&self) -> bool {
         self == &Self::Null
     }
-
-    #[cfg(feature = "128bit")]
-    #[inline]
-    #[must_use]
-    fn as_i64(&self) -> Option<i64> {
-        match self {
-            Self::I64(i) => Some(*i),
-            Self::U64(i) => i64::try_from(*i).ok(),
-            Self::I128(i) => i64::try_from(*i).ok(),
-            Self::U128(i) => i64::try_from(*i).ok(),
-            _ => None,
-        }
-    }
-
-    #[cfg(feature = "128bit")]
-    #[inline]
-    #[must_use]
-    fn as_i128(&self) -> Option<i128> {
-        match self {
-            Self::I128(i) => Some(*i),
-            Self::U128(i) => i128::try_from(*i).ok(),
-            Self::I64(i) => Some(i128::from(*i)),
-            Self::U64(i) => i128::try_from(*i).ok(),
-            _ => None,
-        }
-    }
-
-    #[cfg(feature = "128bit")]
-    #[inline]
-    #[must_use]
-    #[allow(clippy::cast_sign_loss)]
-    fn as_u64(&self) -> Option<u64> {
-        match self {
-            Self::I64(i) => u64::try_from(*i).ok(),
-            Self::U64(i) => Some(*i),
-            Self::I128(i) => u64::try_from(*i).ok(),
-            Self::U128(i) => u64::try_from(*i).ok(),
-            _ => None,
-        }
-    }
-    #[cfg(feature = "128bit")]
-    #[inline]
-    #[must_use]
-    #[allow(clippy::cast_sign_loss)]
-    fn as_u128(&self) -> Option<u128> {
-        match self {
-            Self::U128(i) => Some(*i),
-            Self::I128(i) => u128::try_from(*i).ok(),
-            Self::I64(i) => u128::try_from(*i).ok(),
-            Self::U64(i) => Some(u128::from(*i)),
-            _ => None,
-        }
-    }
-
-    #[cfg(feature = "128bit")]
-    #[inline]
-    #[allow(clippy::cast_precision_loss)]
-    fn cast_f64(&self) -> Option<f64> {
-        match self {
-            Self::F64(i) => Some(*i),
-            Self::I64(i) => Some(*i as f64),
-            Self::U64(i) => Some(*i as f64),
-            Self::I128(i) => Some(*i as f64),
-            Self::U128(i) => Some(*i as f64),
-            _ => None,
-        }
-    }
 }
 
 impl ValueAccess for StaticNode {
@@ -183,21 +116,6 @@ impl ValueAccess for StaticNode {
     #[must_use]
     fn as_object(&self) -> Option<&HashMap<Self::Key, Self>> {
         None
-    }
-
-    #[cfg(feature = "128bit")]
-    #[inline]
-    #[must_use]
-    fn value_type(&self) -> ValueType {
-        match self {
-            Self::Null => ValueType::Null,
-            Self::Bool(_) => ValueType::Bool,
-            Self::F64(_) => ValueType::F64,
-            Self::I128(_) => ValueType::I128,
-            Self::I64(_) => ValueType::I64,
-            Self::U128(_) => ValueType::U128,
-            Self::U64(_) => ValueType::U64,
-        }
     }
 
     #[inline]
@@ -320,6 +238,7 @@ impl ValueAccess for StaticNode {
             _ => None,
         }
     }
+
     #[inline]
     #[must_use]
     fn as_str(&self) -> Option<&str> {
