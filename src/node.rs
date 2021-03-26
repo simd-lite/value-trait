@@ -1,3 +1,5 @@
+use crate::ValueAccess;
+
 use super::{fmt, Value, ValueType};
 use float_cmp::approx_eq;
 use halfbrown::HashMap;
@@ -63,10 +65,6 @@ impl IndexMut<usize> for StaticNode {
 }
 
 impl Value for StaticNode {
-    type Key = String;
-    type Array = Vec<StaticNode>;
-    type Object = HashMap<String, StaticNode>;
-
     #[cfg(not(feature = "128bit"))]
     #[inline]
     #[must_use]
@@ -100,6 +98,24 @@ impl Value for StaticNode {
     #[must_use]
     fn is_null(&self) -> bool {
         self == &Self::Null
+    }
+}
+
+impl ValueAccess for StaticNode {
+    type Target = StaticNode;
+    type Key = String;
+    type Array = Vec<StaticNode>;
+    type Object = HashMap<String, StaticNode>;
+
+    #[inline]
+    #[must_use]
+    fn as_array(&self) -> Option<&Self::Array> {
+        None
+    }
+    #[inline]
+    #[must_use]
+    fn as_object(&self) -> Option<&HashMap<Self::Key, Self>> {
+        None
     }
 
     #[inline]
@@ -222,19 +238,10 @@ impl Value for StaticNode {
             _ => None,
         }
     }
+
     #[inline]
     #[must_use]
     fn as_str(&self) -> Option<&str> {
-        None
-    }
-    #[inline]
-    #[must_use]
-    fn as_array(&self) -> Option<&Self::Array> {
-        None
-    }
-    #[inline]
-    #[must_use]
-    fn as_object(&self) -> Option<&HashMap<Self::Key, Self>> {
         None
     }
 }

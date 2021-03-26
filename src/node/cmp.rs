@@ -1,5 +1,5 @@
 use super::StaticNode;
-use crate::Value as ValueTrait;
+use crate::{Value as ValueTrait, ValueAccess};
 
 impl PartialEq<()> for StaticNode {
     #[inline]

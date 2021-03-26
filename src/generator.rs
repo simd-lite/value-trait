@@ -518,7 +518,7 @@ where
     let backslash = _mm256_set1_epi8(b'\\' as i8);
     while string.len() - idx >= 32 {
         // Load 32 bytes of data;
-        let data: __m256i = _mm256_loadu_si256(string.as_ptr().add(idx) as *const __m256i);
+        let data: __m256i = _mm256_loadu_si256(string.as_ptr().add(idx).cast::<__m256i>());
         // Test the data against being backslash and quote.
         let bs_or_quote = _mm256_or_si256(
             _mm256_cmpeq_epi8(data, backslash),
@@ -581,7 +581,7 @@ where
     let backslash = _mm_set1_epi8(b'\\' as i8);
     while string.len() - idx > 16 {
         // Load 16 bytes of data;
-        let data: __m128i = _mm_loadu_si128(string.as_ptr().add(idx) as *const __m128i);
+        let data: __m128i = _mm_loadu_si128(string.as_ptr().add(idx).cast::<__m128i>());
         // Test the data against being backslash and quote.
         let bs_or_quote =
             _mm_or_si128(_mm_cmpeq_epi8(data, backslash), _mm_cmpeq_epi8(data, quote));
