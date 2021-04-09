@@ -468,6 +468,13 @@ pub trait ValueAccess: Sized {
     #[must_use]
     fn as_str(&self) -> Option<&str>;
 
+    /// Tries to represent the value as a Char
+    #[inline]
+    #[must_use]
+    fn as_char(&self) -> Option<char> {
+        self.as_str().and_then(|s| s.chars().next())
+    }
+
     /// Tries to get an element of an object as a str
     #[inline]
     #[must_use]
@@ -676,6 +683,13 @@ pub trait Value:
     #[must_use]
     fn is_str(&self) -> bool {
         self.as_str().is_some()
+    }
+
+    /// returns true if the current value can be represented as a char
+    #[inline]
+    #[must_use]
+    fn is_char(&self) -> bool {
+        self.as_char().is_some()
     }
 
     /// returns true if the current value can be represented as an array
