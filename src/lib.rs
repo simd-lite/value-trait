@@ -715,7 +715,7 @@ pub trait Value:
 
 /// Mutatability for values
 pub trait Mutable: IndexMut<usize> + Value + Sized {
-    /// Tries to insert into this `Value` as an `Object`.
+    /// Insert into this `Value` as an `Object`.
     /// Will return an `AccessError::NotAnObject` if called
     /// on a `Value` that isn't an object - otherwise will
     /// behave the same as `HashMap::insert`
@@ -734,7 +734,20 @@ pub trait Mutable: IndexMut<usize> + Value + Sized {
             .map(|o| o.insert(k.into(), v.into()))
     }
 
-    /// Tries to remove from this `Value` as an `Object`.
+    /// Tries to insert into this `Value` as an `Object`.
+    /// If the `Value` isn't an object this opoeration will
+    /// return `None` and have no effect.
+    #[inline]
+    fn try_insert<K, V>(&mut self, k: K, v: V) -> Option<Self::Target>
+    where
+        K: Into<<Self as ValueAccess>::Key>,
+        V: Into<<Self as ValueAccess>::Target>,
+        <Self as ValueAccess>::Key: Hash + Eq,
+    {
+        self.insert(k, v).ok().flatten()
+    }
+
+    /// Remove from this `Value` as an `Object`.
     /// Will return an `AccessError::NotAnObject` if called
     /// on a `Value` that isn't an object - otherwise will
     /// behave the same as `HashMap::remove`
@@ -752,7 +765,19 @@ pub trait Mutable: IndexMut<usize> + Value + Sized {
             .map(|o| o.remove(k))
     }
 
-    /// Tries to push to this `Value` as an `Array`.
+    /// Tries to remove from this `Value` as an `Object`.
+    /// If the `Value` isn't an object this opoeration will
+    /// return `None` and have no effect.
+    #[inline]
+    fn try_remove<Q: ?Sized>(&mut self, k: &Q) -> Option<Self::Target>
+    where
+        <Self as ValueAccess>::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.remove(k).ok().flatten()
+    }
+
+    /// Pushes to this `Value` as an `Array`.
     /// Will return an `AccessError::NotAnArray` if called
     /// on a `Value` that isn't an `Array` - otherwise will
     /// behave the same as `Vec::push`
@@ -769,7 +794,17 @@ pub trait Mutable: IndexMut<usize> + Value + Sized {
             .map(|o| o.push(v.into()))
     }
 
-    /// Tries to pop from this `Value` as an `Array`.
+    /// Tries to push to a `Value` if as an `Array`.
+    /// This funciton will have no effect if `Value` is of
+    /// a different type
+    fn try_push<V>(&mut self, v: V)
+    where
+        V: Into<<Self as ValueAccess>::Target>,
+    {
+        let _ = self.push(v);
+    }
+
+    /// Pops from this `Value` as an `Array`.
     /// Will return an `AccessError::NotAnArray` if called
     /// on a `Value` that isn't an `Array` - otherwise will
     /// behave the same as `Vec::pop`
@@ -781,6 +816,14 @@ pub trait Mutable: IndexMut<usize> + Value + Sized {
         self.as_array_mut()
             .ok_or(AccessError::NotAnArray)
             .map(Array::pop)
+    }
+
+    /// Tries to pop from a `Value` as an `Array`.
+    /// if the `Value` is any other type `None` will
+    /// always be returned
+    #[inline]
+    fn try_pop(&mut self) -> Option<Self::Target> {
+        self.pop().ok().flatten()
     }
     /// Same as `get` but returns a mutable ref instead
     //    fn get_amut(&mut self, k: &str) -> Option<&mut Self>;
