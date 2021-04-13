@@ -825,6 +825,7 @@ pub trait Mutable: IndexMut<usize> + Value + Sized {
     fn try_pop(&mut self) -> Option<Self::Target> {
         self.pop().ok().flatten()
     }
+
     /// Same as `get` but returns a mutable ref instead
     //    fn get_amut(&mut self, k: &str) -> Option<&mut Self>;
     fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut Self::Target>
