@@ -5,8 +5,6 @@ authors = ["Heinz N. Gies <heinz@licenser.net>"]
 edition = "2018"
 license = "Apache-2.0/MIT"
 description = "Traits to deal with JSONesque values"
-rust-version = "1.49"
-
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
