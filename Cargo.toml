@@ -5,8 +5,11 @@ authors = ["Heinz N. Gies <heinz@licenser.net>"]
 edition = "2018"
 license = "Apache-2.0/MIT"
 description = "Traits to deal with JSONesque values"
+repository = "https://github.com/simd-lite/value-trait"
+readme = "README.md"
+documentation = "https://docs.rs/value-trait"
+rust-version = "1.49"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 itoa = { version = "0.4", features = ["i128"] }
