@@ -17,9 +17,14 @@ ryu = "1"
 halfbrown = "0.1"
 float-cmp = "0.9"
 
+abi_stable = { version = "0.10", optional = true }
+
 [features]
 # Support for 128 bit integers
 128bit = []
 
 # Support for custom types
 custom-types = []
+
+# Support for abi-stable's `StableAbi` implementation
+c-abi = ["abi_stable"]
