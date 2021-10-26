@@ -18,7 +18,7 @@ jobs:
           - "-C target-cpu=native -C target-feature=-avx2"
         features:
           - ""
-          - "--features 128bit"
+          - "--features 128bit,c-abi"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v1
