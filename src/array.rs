@@ -1,9 +1,8 @@
 use crate::Value;
-use std::ops::Index;
 use std::slice::SliceIndex;
 
 /// Functions guaranteed for any array object
-pub trait Array: Index<usize> + Sync + Send + Clone {
+pub trait Array: Sync + Send + Clone {
     /// Elements of the array
     type Element: Value;
 
@@ -86,6 +85,7 @@ where
     T: Value + Sync + Send + Clone,
 {
     type Element = T;
+
     #[inline]
     fn get<I>(&self, i: I) -> Option<&<I as SliceIndex<[T]>>::Output>
     where
@@ -93,6 +93,7 @@ where
     {
         <[T]>::get(self, i)
     }
+
     #[inline]
     fn get_mut(&mut self, i: usize) -> Option<&mut T> {
         <[T]>::get_mut(self, i)
@@ -100,12 +101,12 @@ where
 
     #[inline]
     fn pop(&mut self) -> Option<T> {
-        Vec::pop(self)
+        abi_stable::std_types::RVec::pop(self)
     }
 
     #[inline]
     fn push(&mut self, e: T) {
-        Vec::push(self, e)
+        abi_stable::std_types::RVec::push(self, e)
     }
 
     fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = &T> + 'i> {

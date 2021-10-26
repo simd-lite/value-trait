@@ -17,7 +17,8 @@ ryu = "1"
 halfbrown = "0.1"
 float-cmp = "0.9"
 
-abi_stable = { version = "0.10", optional = true }
+# NOTE: Temporary until the canges are upstreamed
+abi_stable = { version = "0.10", optional = true, git = "https://github.com/rodrimati1992/abi_stable_crates.git" }
 
 [features]
 # Support for 128 bit integers

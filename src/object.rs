@@ -209,7 +209,7 @@ where
         Self::Key: Borrow<Q> + Hash + Eq,
         Q: Hash + Eq + Ord,
     {
-        HashMap::get(self, k)
+        abi_stable::std_types::RHashMap::get(self, k)
     }
 
     #[inline]
@@ -218,7 +218,7 @@ where
         Self::Key: Borrow<Q> + Hash + Eq,
         Q: Hash + Eq + Ord,
     {
-        HashMap::get_mut(self, k)
+        abi_stable::std_types::RHashMap::get_mut(self, k)
     }
 
     #[inline]
@@ -228,7 +228,7 @@ where
         V: Into<Self::Element>,
         Self::Key: Hash + Eq,
     {
-        HashMap::insert(self, k.into(), v.into())
+        abi_stable::std_types::RHashMap::insert(self, k.into(), v.into()).into()
     }
 
     #[inline]
@@ -237,26 +237,26 @@ where
         Self::Key: Borrow<Q> + Hash + Eq,
         Q: Hash + Eq + Ord,
     {
-        HashMap::remove(self, k)
+        abi_stable::std_types::RHashMap::remove(self, k).into()
     }
 
     #[inline]
     fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + 'i> {
-        Box::new(HashMap::iter(self))
+        Box::new(abi_stable::std_types::RHashMap::iter(self).map(Into::into))
     }
 
     #[inline]
     fn keys<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Key> + 'i> {
-        Box::new(HashMap::keys(self))
+        Box::new(abi_stable::std_types::RHashMap::keys(self))
     }
 
     #[inline]
     fn values<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Element> + 'i> {
-        Box::new(HashMap::values(self))
+        Box::new(abi_stable::std_types::RHashMap::values(self))
     }
 
     #[inline]
     fn len(&self) -> usize {
-        HashMap::len(self)
+        abi_stable::std_types::RHashMap::len(self)
     }
 }
