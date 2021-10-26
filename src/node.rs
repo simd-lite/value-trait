@@ -11,8 +11,8 @@ mod from;
 
 /// Static tape node
 #[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "stable-abi", repr(C))]
-#[cfg_attr(feature = "stable-abi", derive(abi_stable::StableAbi))]
+#[cfg_attr(feature = "c-abi", repr(C))]
+#[cfg_attr(feature = "c-abi", derive(abi_stable::StableAbi))]
 pub enum StaticNode {
     /// A signed 64 bit integer.
     I64(i64),
