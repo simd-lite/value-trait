@@ -19,7 +19,7 @@ float-cmp = "0.9"
 
 # FIXME: Temporary until the canges are upstreamed:
 # https://github.com/rodrimati1992/abi_stable_crates/pull/61
-abi_stable = { version = "0.10", optional = true, git = "https://github.com/marioortizmanero/abi_stable_crates.git", branch = "floating-point" }
+abi_stable = { version = "0.10", optional = true, git = "https://github.com/marioortizmanero/abi_stable_crates.git", branch = "floating-point", default-features = false }
 
 [features]
 # Support for 128 bit integers
