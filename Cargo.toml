@@ -17,7 +17,8 @@ ryu = "1"
 halfbrown = "0.1"
 float-cmp = "0.9"
 
-# NOTE: Temporary until the canges are upstreamed
+# FIXME: Temporary until the canges are upstreamed:
+# https://github.com/rodrimati1992/abi_stable_crates/pull/61
 abi_stable = { version = "0.10", optional = true, git = "https://github.com/marioortizmanero/abi_stable_crates.git", branch = "floating-point" }
 
 [features]

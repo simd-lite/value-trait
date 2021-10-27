@@ -12,6 +12,17 @@
 #![allow(clippy::module_name_repetitions, clippy::inline_always)]
 #![deny(missing_docs)]
 
+#[cfg(all(feature = "128bit", feature = "c-abi"))]
+compile_error! (
+    "Combining the features `128bit` and `c-abi` is impossible because i128's \
+    ABI is unstable (see \
+    https://github.com/rust-lang/unsafe-code-guidelines/issues/119). Please \
+    use only one of them in order to compile this crate. If you don't know \
+    where this error is coming from, it's possible that you depend on \
+    value-trait twice indirectly, once with the `c-abi` feature, and once with \
+    the `128bit` feature, and that they have been merged by Cargo."
+);
+
 use std::borrow::{Borrow, Cow};
 use std::convert::TryInto;
 use std::fmt;
