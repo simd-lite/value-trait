@@ -8,7 +8,6 @@
     clippy::unnecessary_unwrap,
     clippy::pedantic
 )]
-#![forbid(warnings)]
 // We might want to revisit inline_always
 #![allow(clippy::module_name_repetitions, clippy::inline_always)]
 #![deny(missing_docs)]

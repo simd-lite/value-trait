@@ -193,3 +193,70 @@ where
         HashMap::len(self)
     }
 }
+
+#[cfg(feature = "c-abi")]
+impl<MapK, MapE, S: ::std::hash::BuildHasher> Object
+    for abi_stable::std_types::RHashMap<MapK, MapE, S>
+where
+    MapK: Hash + Eq,
+{
+    type Key = MapK;
+    type Element = MapE;
+
+    #[inline]
+    fn get<Q: ?Sized>(&self, k: &Q) -> Option<&Self::Element>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        abi_stable::std_types::RHashMap::get(self, k)
+    }
+
+    #[inline]
+    fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut Self::Element>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        abi_stable::std_types::RHashMap::get_mut(self, k)
+    }
+
+    #[inline]
+    fn insert<K, V>(&mut self, k: K, v: V) -> Option<Self::Element>
+    where
+        K: Into<Self::Key>,
+        V: Into<Self::Element>,
+        Self::Key: Hash + Eq,
+    {
+        abi_stable::std_types::RHashMap::insert(self, k.into(), v.into()).into()
+    }
+
+    #[inline]
+    fn remove<Q: ?Sized>(&mut self, k: &Q) -> Option<Self::Element>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        abi_stable::std_types::RHashMap::remove(self, k).into()
+    }
+
+    #[inline]
+    fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + 'i> {
+        Box::new(abi_stable::std_types::RHashMap::iter(self).map(Into::into))
+    }
+
+    #[inline]
+    fn keys<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Key> + 'i> {
+        Box::new(abi_stable::std_types::RHashMap::keys(self))
+    }
+
+    #[inline]
+    fn values<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Element> + 'i> {
+        Box::new(abi_stable::std_types::RHashMap::values(self))
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        abi_stable::std_types::RHashMap::len(self)
+    }
+}

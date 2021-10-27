@@ -17,9 +17,15 @@ ryu = "1"
 halfbrown = "0.1"
 float-cmp = "0.9"
 
+# NOTE: Temporary until the canges are upstreamed
+abi_stable = { version = "0.10", optional = true, git = "https://github.com/marioortizmanero/abi_stable_crates.git", branch = "floating-point" }
+
 [features]
 # Support for 128 bit integers
 128bit = []
 
 # Support for custom types
 custom-types = []
+
+# Support for abi-stable's `StableAbi` implementation
+c-abi = ["abi_stable"]

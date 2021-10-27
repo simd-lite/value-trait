@@ -13,12 +13,16 @@ jobs:
           - ubuntu-latest
           - windows-latest
           - macOS-latest
+        env:
+          RUSTFLAGS: -D warnings
         rustflags:
           - "-C target-cpu=native"
           - "-C target-cpu=native -C target-feature=-avx2"
         features:
           - ""
+          - "--features c-abi"
           - "--features 128bit"
+          - "--features 128bit,c-abi"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v1
