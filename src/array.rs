@@ -67,7 +67,7 @@ where
 
     #[inline]
     fn push(&mut self, e: T) {
-        Vec::push(self, e)
+        Vec::push(self, e);
     }
 
     fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = &T> + 'i> {

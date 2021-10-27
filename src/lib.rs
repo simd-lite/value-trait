@@ -13,7 +13,7 @@
 #![deny(missing_docs)]
 
 #[cfg(all(feature = "128bit", feature = "c-abi"))]
-compile_error! (
+compile_error!(
     "Combining the features `128bit` and `c-abi` is impossible because i128's \
     ABI is unstable (see \
     https://github.com/rust-lang/unsafe-code-guidelines/issues/119). Please \
@@ -441,10 +441,8 @@ pub trait ValueAccess: Sized {
             Some(f)
         } else if let Some(u) = self.as_u128() {
             Some(u as f64)
-        } else if let Some(i) = self.as_i128() {
-            Some(i as f64)
         } else {
-            None
+            self.as_i128().map(|i| i as f64)
         }
     }
 
@@ -843,7 +841,7 @@ pub trait Mutable: IndexMut<usize> + Value + Sized {
         <Self as ValueAccess>::Key: Borrow<Q> + Hash + Eq,
         Q: Hash + Eq + Ord,
     {
-        self.as_object_mut().and_then(|m| m.get_mut(&k))
+        self.as_object_mut().and_then(|m| m.get_mut(k))
     }
 
     /// Same as `get_idx` but returns a mutable ref instead

@@ -127,7 +127,7 @@ pub trait BaseGenerator {
             if escape > 0 {
                 stry!(self.write(&string[start..index]));
                 if escape == b'u' {
-                    stry!(u_encode(self.get_writer(), *ch))
+                    stry!(u_encode(self.get_writer(), *ch));
                 } else {
                     stry!(self.write(&[b'\\', escape]));
                 };

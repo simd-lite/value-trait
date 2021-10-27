@@ -11,31 +11,31 @@ where
     type Object = V::Object;
 
     fn as_bool(&self) -> Option<bool> {
-        self.as_ref().and_then(|v| v.as_bool())
+        self.as_ref().and_then(ValueAccess::as_bool)
     }
 
     fn as_i64(&self) -> Option<i64> {
-        self.as_ref().and_then(|v| v.as_i64())
+        self.as_ref().and_then(ValueAccess::as_i64)
     }
 
     fn as_u64(&self) -> Option<u64> {
-        self.as_ref().and_then(|v| v.as_u64())
+        self.as_ref().and_then(ValueAccess::as_u64)
     }
 
     fn as_f64(&self) -> Option<f64> {
-        self.as_ref().and_then(|v| v.as_f64())
+        self.as_ref().and_then(ValueAccess::as_f64)
     }
 
     fn as_str(&self) -> Option<&str> {
-        self.as_ref().and_then(|v| v.as_str())
+        self.as_ref().and_then(ValueAccess::as_str)
     }
 
     fn as_array(&self) -> Option<&Self::Array> {
-        self.as_ref().and_then(|v| v.as_array())
+        self.as_ref().and_then(ValueAccess::as_array)
     }
 
     fn as_object(&self) -> Option<&Self::Object> {
-        self.as_ref().and_then(|v| v.as_object())
+        self.as_ref().and_then(ValueAccess::as_object)
     }
 }
 
@@ -49,31 +49,31 @@ where
     type Object = V::Object;
 
     fn as_bool(&self) -> Option<bool> {
-        self.as_ref().ok().and_then(|v| v.as_bool())
+        self.as_ref().ok().and_then(ValueAccess::as_bool)
     }
 
     fn as_i64(&self) -> Option<i64> {
-        self.as_ref().ok().and_then(|v| v.as_i64())
+        self.as_ref().ok().and_then(ValueAccess::as_i64)
     }
 
     fn as_u64(&self) -> Option<u64> {
-        self.as_ref().ok().and_then(|v| v.as_u64())
+        self.as_ref().ok().and_then(ValueAccess::as_u64)
     }
 
     fn as_f64(&self) -> Option<f64> {
-        self.as_ref().ok().and_then(|v| v.as_f64())
+        self.as_ref().ok().and_then(ValueAccess::as_f64)
     }
 
     fn as_str(&self) -> Option<&str> {
-        self.as_ref().ok().and_then(|v| v.as_str())
+        self.as_ref().ok().and_then(ValueAccess::as_str)
     }
 
     fn as_array(&self) -> Option<&Self::Array> {
-        self.as_ref().ok().and_then(|v| v.as_array())
+        self.as_ref().ok().and_then(ValueAccess::as_array)
     }
 
     fn as_object(&self) -> Option<&Self::Object> {
-        self.as_ref().ok().and_then(|v| v.as_object())
+        self.as_ref().ok().and_then(ValueAccess::as_object)
     }
 }
 
