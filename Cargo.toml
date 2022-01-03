@@ -12,7 +12,7 @@ rust-version = "1.49"
 
 
 [dependencies]
-itoa = { version = "0.4", features = ["i128"] }
+itoa = "1"
 ryu = "1"
 halfbrown = "0.1"
 float-cmp = "0.9"
