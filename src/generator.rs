@@ -684,3 +684,54 @@ where
     *string = &string[idx..];
     Ok(())
 }
+
+#[cfg(all(target_arch = "wasm32", target_feature = "simd128"))]
+#[inline(always)]
+pub(crate) unsafe fn write_str_simd<W>(writer: &mut W, string: &mut &[u8]) -> io::Result<()>
+where
+    W: std::io::Write,
+{
+    use std::arch::wasm32::{
+        u8x16_bitmask, u8x16_eq, u8x16_splat, v128, v128_and, v128_load, v128_or, v128_xor,
+    };
+
+    // The case where we have a 16+ byte block
+    // we repeat the same logic as above but with
+    // only 16 bytes
+    let mut idx = 0;
+    let zero = u8x16_splat(0);
+    let lower_quote_range = u8x16_splat(0x1F);
+    let quote = u8x16_splat(b'"');
+    let backslash = u8x16_splat(b'\\');
+    while string.len() - idx > 16 {
+        // Load 16 bytes of data;
+        let data = v128_load(string.as_ptr().add(idx).cast::<v128>());
+        // Test the data against being backslash and quote.
+        let bs_or_quote = v128_or(u8x16_eq(data, backslash), u8x16_eq(data, quote));
+        // Now mask the data with the quote range (0x1F).
+        let in_quote_range = v128_and(data, lower_quote_range);
+        // then test of the data is unchanged. aka: xor it with the
+        // Any field that was inside the quote range it will be zero
+        // now.
+        let is_unchanged = v128_xor(data, in_quote_range);
+        let in_range = u8x16_eq(is_unchanged, zero);
+        let quote_bits = u8x16_bitmask(v128_or(bs_or_quote, in_range));
+        if quote_bits == 0 {
+            idx += 16;
+        } else {
+            let quote_dist = quote_bits.trailing_zeros() as usize;
+            stry!(writer.write_all(&string[0..idx + quote_dist]));
+            let ch = string[idx + quote_dist];
+            match ESCAPED[ch as usize] {
+                b'u' => stry!(u_encode(writer, ch)),
+                escape => stry!(writer.write_all(&[b'\\', escape])),
+            }
+
+            *string = &string[idx + quote_dist + 1..];
+            idx = 0;
+        }
+    }
+    stry!(writer.write_all(&string[0..idx]));
+    *string = &string[idx..];
+    Ok(())
+}
