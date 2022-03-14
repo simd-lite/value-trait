@@ -1,6 +1,5 @@
 //! A crate providing generalised value traits for working with
 //! `JSONesque` values.
-#![cfg_attr(target_arch = "aarch64", feature(stdsimd,))]
 #![warn(unused_extern_crates)]
 #![deny(
     clippy::all,

@@ -8,7 +8,7 @@ description = "Traits to deal with JSONesque values"
 repository = "https://github.com/simd-lite/value-trait"
 readme = "README.md"
 documentation = "https://docs.rs/value-trait"
-rust-version = "1.49"
+rust-version = "1.59"
 
 
 [dependencies]
