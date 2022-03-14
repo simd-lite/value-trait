@@ -2,7 +2,7 @@
 name = "value-trait"
 version = "0.2.10"
 authors = ["Heinz N. Gies <heinz@licenser.net>"]
-edition = "2018"
+edition = "2021"
 license = "Apache-2.0/MIT"
 description = "Traits to deal with JSONesque values"
 repository = "https://github.com/simd-lite/value-trait"

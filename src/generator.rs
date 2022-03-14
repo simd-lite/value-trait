@@ -479,6 +479,7 @@ where
 // LLVM is not able to lower `Vec::extend_from_slice` into a memcpy, so this
 // helps eke out that last bit of performance.
 #[inline(always)]
+#[allow(clippy::uninit_vec)]
 pub(crate) fn extend_from_slice(dst: &mut Vec<u8>, src: &[u8]) {
     let dst_len = dst.len();
     let src_len = src.len();
