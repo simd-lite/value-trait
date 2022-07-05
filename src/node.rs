@@ -2,7 +2,7 @@ use crate::ValueAccess;
 
 use super::{fmt, Value, ValueType};
 use float_cmp::approx_eq;
-use halfbrown::HashMap;
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::ops::{Index, IndexMut};
 
