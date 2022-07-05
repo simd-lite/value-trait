@@ -22,6 +22,8 @@ jobs:
           - ""
           - "--features c-abi"
           - "--features 128bit"
+          - "--features hashbrown"
+          - "--features halfbrown"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v1

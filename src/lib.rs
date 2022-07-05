@@ -9,6 +9,7 @@
 )]
 // We might want to revisit inline_always
 #![allow(clippy::module_name_repetitions, clippy::inline_always)]
+#![allow(clippy::type_repetition_in_bounds)]
 #![deny(missing_docs)]
 
 #[cfg(all(feature = "128bit", feature = "c-abi"))]
