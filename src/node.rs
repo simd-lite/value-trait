@@ -249,7 +249,7 @@ impl ValueAccess for StaticNode {
 }
 
 #[cfg(not(tarpaulin_include))]
-impl<'v> fmt::Display for StaticNode {
+impl fmt::Display for StaticNode {
     #[cfg(not(feature = "128bit"))]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -275,7 +275,7 @@ impl<'v> fmt::Display for StaticNode {
 }
 
 #[allow(clippy::cast_sign_loss, clippy::default_trait_access)]
-impl<'a> PartialEq for StaticNode {
+impl PartialEq for StaticNode {
     #[cfg(not(feature = "128bit"))]
     #[inline]
     #[must_use]
