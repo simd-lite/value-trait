@@ -67,7 +67,7 @@ impl fmt::Display for AccessError {
 }
 impl std::error::Error for AccessError {}
 
-/// Extemded types that have no native representation in JSON
+/// Extended types that have no native representation in JSON
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ExtendedValueType {
     /// A 32 bit signed integer value
