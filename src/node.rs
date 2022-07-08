@@ -67,6 +67,19 @@ impl IndexMut<usize> for StaticNode {
 }
 
 impl Value for StaticNode {
+    #[inline]
+    #[must_use]
+    fn is_null(&self) -> bool {
+        self == &Self::Null
+    }
+}
+
+impl ValueAccess for StaticNode {
+    type Target = StaticNode;
+    type Key = String;
+    type Array = Vec<StaticNode>;
+    type Object = HashMap<String, StaticNode>;
+
     #[cfg(not(feature = "128bit"))]
     #[inline]
     #[must_use]
@@ -95,20 +108,6 @@ impl Value for StaticNode {
             Self::U64(_) => ValueType::U64,
         }
     }
-
-    #[inline]
-    #[must_use]
-    fn is_null(&self) -> bool {
-        self == &Self::Null
-    }
-}
-
-impl ValueAccess for StaticNode {
-    type Target = StaticNode;
-    type Key = String;
-    type Array = Vec<StaticNode>;
-    type Object = HashMap<String, StaticNode>;
-
     #[inline]
     #[must_use]
     fn as_array(&self) -> Option<&Self::Array> {

@@ -1,4 +1,4 @@
-#[cfg(feature = "hashbrown")]
+#[cfg(feature = "halfbrown")]
 use halfbrown::HashMap as Halfbrown;
 #[cfg(feature = "hashbrown")]
 use hashbrown::HashMap as Hashbrown;
@@ -67,7 +67,7 @@ pub trait Object {
     }
 }
 
-#[cfg(feature = "hashbrown")]
+#[cfg(feature = "halfbrown")]
 impl<MapK, MapE> Object for Halfbrown<MapK, MapE>
 where
     MapK: Hash + Eq,

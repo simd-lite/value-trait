@@ -67,6 +67,54 @@ impl fmt::Display for AccessError {
 }
 impl std::error::Error for AccessError {}
 
+/// Extended types that have no native representation in JSON
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ExtendedValueType {
+    /// A 32 bit signed integer value
+    I32,
+    /// A 16 bit signed integer value
+    I16,
+    /// A 8 bit signed integer value
+    I8,
+    /// A 32 bit unsigned integer value
+    U32,
+    /// A 16 bit unsigned integer value
+    U16,
+    /// A 8 bit unsigned integer value
+    U8,
+    /// A useize value
+    Usize,
+    /// A 32 bit floating point value
+    F32,
+    /// A single utf-8 character
+    Char,
+    /// Not a value at all
+    None,
+}
+
+impl Default for ExtendedValueType {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+impl fmt::Display for ExtendedValueType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::I32 => write!(f, "i32"),
+            Self::I16 => write!(f, "i16"),
+            Self::I8 => write!(f, "i8"),
+            Self::U32 => write!(f, "u32"),
+            Self::U16 => write!(f, "u16"),
+            Self::U8 => write!(f, "u8"),
+            Self::Usize => write!(f, "usize"),
+            Self::F32 => write!(f, "f32"),
+            Self::Char => write!(f, "char"),
+            Self::None => write!(f, "none"),
+        }
+    }
+}
+
 /// Types of JSON values
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum ValueType {
@@ -76,12 +124,10 @@ pub enum ValueType {
     Bool,
     /// a signed integer type
     I64,
-    #[cfg(feature = "128bit")]
     /// a 128 bit signed integer
     I128,
     /// a unsigned integer type
     U64,
-    #[cfg(feature = "128bit")]
     /// a 128 bit unsiged integer
     U128,
     /// a float type
@@ -92,9 +138,36 @@ pub enum ValueType {
     Array,
     /// an object
     Object,
+    /// Extended types that do not have a real representation in JSON
+    Extended(ExtendedValueType),
     #[cfg(feature = "custom-types")]
     /// a custom type
     Custom(&'static str),
+}
+impl fmt::Display for ValueType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Null => write!(f, "null"),
+            Self::Bool => write!(f, "bool"),
+            Self::I64 => write!(f, "i64"),
+            Self::I128 => write!(f, "i128"),
+            Self::U64 => write!(f, "u64"),
+            Self::U128 => write!(f, "u128"),
+            Self::F64 => write!(f, "f64"),
+            Self::String => write!(f, "string"),
+            Self::Array => write!(f, "array"),
+            Self::Object => write!(f, "object"),
+            Self::Extended(ty) => write!(f, "{}", ty),
+            #[cfg(feature = "custom-types")]
+            Self::Custom(name) => write!(f, "{}", name),
+        }
+    }
+}
+
+impl Default for ValueType {
+    fn default() -> Self {
+        Self::Null
+    }
 }
 
 /// A Value that can be serialized and written
@@ -164,6 +237,68 @@ pub trait Builder<'input>:
     fn null() -> Self;
 }
 
+/// A type error thrown by the `try_*` functions
+pub struct TryTypeError {
+    /// The expected value type
+    pub expected: ValueType,
+    /// The actual value type
+    pub got: ValueType,
+}
+
+/// A trait that specifies how to turn the Value `into` it's sub types
+pub trait ValueInto: Sized + ValueAccess {
+    /// The type for Strings
+    type String;
+
+    /// Tries to turn the value into it's string representation
+    #[must_use]
+    fn into_string(self) -> Option<Self::String>;
+
+    /// Tries to turn the value into it's string representation
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_into_string(self) -> Result<Self::String, TryTypeError> {
+        let vt = self.value_type();
+        self.into_string().ok_or(TryTypeError {
+            expected: ValueType::String,
+            got: vt,
+        })
+    }
+
+    /// Tries to turn the value into it's array representation
+    #[must_use]
+    fn into_array(self) -> Option<Self::Array>;
+
+    /// Tries to turn the value into it's array representation
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_into_array(self) -> Result<Self::Array, TryTypeError> {
+        let vt = self.value_type();
+        self.into_array().ok_or(TryTypeError {
+            expected: ValueType::Array,
+            got: vt,
+        })
+    }
+
+    /// Tries to turn the value into it's object representation
+    #[must_use]
+    fn into_object(self) -> Option<Self::Object>;
+
+    /// Tries to turn the value into it's object representation
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_into_object(self) -> Result<Self::Object, TryTypeError> {
+        let vt = self.value_type();
+        self.into_object().ok_or(TryTypeError {
+            expected: ValueType::Object,
+            got: vt,
+        })
+    }
+}
+
 /// Trait to allow accessing data inside a Value
 pub trait ValueAccess: Sized {
     /// The target for nested lookups
@@ -174,6 +309,350 @@ pub trait ValueAccess: Sized {
     type Array: Array<Element = Self::Target>;
     /// The object structure
     type Object: Object<Key = Self::Key, Element = Self::Target>;
+
+    /// Gets the type of the current value
+    #[must_use]
+    fn value_type(&self) -> ValueType;
+
+    /// Tries to represent the value as a bool
+    #[must_use]
+    fn as_bool(&self) -> Option<bool>;
+
+    /// Tries to represent the value as a bool
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_bool(&self) -> Result<bool, TryTypeError> {
+        self.as_bool().ok_or(TryTypeError {
+            expected: ValueType::Bool,
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as an i128
+    #[inline]
+    #[must_use]
+    fn as_i128(&self) -> Option<i128> {
+        self.as_i64().and_then(|u| u.try_into().ok())
+    }
+
+    /// Tries to represent the value as a i128
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_i128(&self) -> Result<i128, TryTypeError> {
+        self.as_i128().ok_or(TryTypeError {
+            expected: ValueType::I128,
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as an i64
+    #[must_use]
+    fn as_i64(&self) -> Option<i64>;
+
+    /// Tries to represent the value as an i64
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_i64(&self) -> Result<i64, TryTypeError> {
+        self.as_i64().ok_or(TryTypeError {
+            expected: ValueType::I64,
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as an i32
+    #[inline]
+    #[must_use]
+    fn as_i32(&self) -> Option<i32> {
+        self.as_i64().and_then(|u| u.try_into().ok())
+    }
+
+    /// Tries to represent the value as an i32
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_i32(&self) -> Result<i32, TryTypeError> {
+        self.as_i32().ok_or(TryTypeError {
+            expected: ValueType::Extended(ExtendedValueType::I32),
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as an i16
+    #[inline]
+    #[must_use]
+    fn as_i16(&self) -> Option<i16> {
+        self.as_i64().and_then(|u| u.try_into().ok())
+    }
+
+    /// Tries to represent the value as an i16
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_i16(&self) -> Result<i16, TryTypeError> {
+        self.as_i16().ok_or(TryTypeError {
+            expected: ValueType::Extended(ExtendedValueType::I16),
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as an i8
+    #[inline]
+    #[must_use]
+    fn as_i8(&self) -> Option<i8> {
+        self.as_i64().and_then(|u| u.try_into().ok())
+    }
+
+    /// Tries to represent the value as an i8
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_i8(&self) -> Result<i8, TryTypeError> {
+        self.as_i8().ok_or(TryTypeError {
+            expected: ValueType::Extended(ExtendedValueType::I8),
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as an u128
+    #[inline]
+    #[must_use]
+    fn as_u128(&self) -> Option<u128> {
+        self.as_u64().and_then(|u| u.try_into().ok())
+    }
+
+    /// Tries to represent the value as an u128
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_u128(&self) -> Result<u128, TryTypeError> {
+        self.as_u128().ok_or(TryTypeError {
+            expected: ValueType::U128,
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as an u64
+    #[must_use]
+    fn as_u64(&self) -> Option<u64>;
+
+    /// Tries to represent the value as an u64
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_u64(&self) -> Result<u64, TryTypeError> {
+        self.as_u64().ok_or(TryTypeError {
+            expected: ValueType::U64,
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as an usize
+    #[inline]
+    #[must_use]
+    fn as_usize(&self) -> Option<usize> {
+        self.as_u64().and_then(|u| u.try_into().ok())
+    }
+
+    /// Tries to represent the value as an usize
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_usize(&self) -> Result<usize, TryTypeError> {
+        self.as_usize().ok_or(TryTypeError {
+            expected: ValueType::Extended(ExtendedValueType::Usize),
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as an u32
+    #[inline]
+    #[must_use]
+    fn as_u32(&self) -> Option<u32> {
+        self.as_u64().and_then(|u| u.try_into().ok())
+    }
+
+    /// Tries to represent the value as an u32
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_u32(&self) -> Result<u32, TryTypeError> {
+        self.as_u32().ok_or(TryTypeError {
+            expected: ValueType::Extended(ExtendedValueType::U32),
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as an u16
+    #[inline]
+    #[must_use]
+    fn as_u16(&self) -> Option<u16> {
+        self.as_u64().and_then(|u| u.try_into().ok())
+    }
+
+    /// Tries to represent the value as an u16
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_u16(&self) -> Result<u16, TryTypeError> {
+        self.as_u16().ok_or(TryTypeError {
+            expected: ValueType::Extended(ExtendedValueType::U16),
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as an u8
+    #[inline]
+    #[must_use]
+    fn as_u8(&self) -> Option<u8> {
+        self.as_u64().and_then(|u| u.try_into().ok())
+    }
+
+    /// Tries to represent the value as an u8
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_u8(&self) -> Result<u8, TryTypeError> {
+        self.as_u8().ok_or(TryTypeError {
+            expected: ValueType::Extended(ExtendedValueType::U8),
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as a f64
+    #[must_use]
+    fn as_f64(&self) -> Option<f64>;
+
+    /// Tries to represent the value as a f64
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_f64(&self) -> Result<f64, TryTypeError> {
+        self.as_f64().ok_or(TryTypeError {
+            expected: ValueType::F64,
+            got: self.value_type(),
+        })
+    }
+
+    /// Casts the current value to a f64 if possible, this will turn integer
+    /// values into floats.
+    #[must_use]
+    #[inline]
+    #[allow(clippy::cast_precision_loss, clippy::option_if_let_else)]
+    fn cast_f64(&self) -> Option<f64> {
+        if let Some(f) = self.as_f64() {
+            Some(f)
+        } else if let Some(u) = self.as_u128() {
+            Some(u as f64)
+        } else {
+            self.as_i128().map(|i| i as f64)
+        }
+    }
+    /// Tries to Casts the current value to a f64 if possible, this will turn integer
+    /// values into floats and error if it isn't possible
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    #[allow(clippy::cast_precision_loss, clippy::option_if_let_else)]
+    fn try_cast_f64(&self) -> Result<f64, TryTypeError> {
+        if let Some(f) = self.as_f64() {
+            Ok(f)
+        } else if let Some(u) = self.as_u128() {
+            Ok(u as f64)
+        } else {
+            self.try_as_i128().map(|i| i as f64)
+        }
+    }
+
+    /// Tries to represent the value as a f32
+    #[allow(clippy::cast_possible_truncation)]
+    #[inline]
+    #[must_use]
+    fn as_f32(&self) -> Option<f32> {
+        self.as_f64().and_then(|u| {
+            if u <= f64::from(std::f32::MAX) && u >= f64::from(std::f32::MIN) {
+                // Since we check above
+                Some(u as f32)
+            } else {
+                None
+            }
+        })
+    }
+    /// Tries to represent the value as a f32
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_f32(&self) -> Result<f32, TryTypeError> {
+        self.as_f32().ok_or(TryTypeError {
+            expected: ValueType::Extended(ExtendedValueType::F32),
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as a &str
+    #[must_use]
+    fn as_str(&self) -> Option<&str>;
+
+    /// Tries to represent the value as a &str
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_str(&self) -> Result<&str, TryTypeError> {
+        self.as_str().ok_or(TryTypeError {
+            expected: ValueType::String,
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as a Char
+    #[inline]
+    #[must_use]
+    fn as_char(&self) -> Option<char> {
+        self.as_str().and_then(|s| s.chars().next())
+    }
+
+    /// Tries to represent the value as a Char
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_char(&self) -> Result<char, TryTypeError> {
+        self.as_char().ok_or(TryTypeError {
+            expected: ValueType::Extended(ExtendedValueType::Char),
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as an array and returns a refference to it
+    #[must_use]
+    fn as_array(&self) -> Option<&Self::Array>;
+
+    /// Tries to represent the value as an array and returns a refference to it
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_array(&self) -> Result<&Self::Array, TryTypeError> {
+        self.as_array().ok_or(TryTypeError {
+            expected: ValueType::Array,
+            got: self.value_type(),
+        })
+    }
+
+    /// Tries to represent the value as an object and returns a refference to it
+    #[must_use]
+    fn as_object(&self) -> Option<&Self::Object>;
+
+    /// Tries to represent the value as an object and returns a refference to it
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    #[inline]
+    fn try_as_object(&self) -> Result<&Self::Object, TryTypeError> {
+        self.as_object().ok_or(TryTypeError {
+            expected: ValueType::Object,
+            got: self.value_type(),
+        })
+    }
 
     /// Gets a ref to a value based on a key, returns `None` if the
     /// current Value isn't an Object or doesn't contain the key
@@ -186,6 +665,25 @@ pub trait ValueAccess: Sized {
         Q: Hash + Eq + Ord,
     {
         self.as_object().and_then(|a| a.get(k))
+    }
+
+    /// Trys to get a value based on a key, returns a `TryTypeError` if the
+    /// current Value isn't an Object, returns `None` if the key isn't in the object
+    /// # Errors
+    /// if the value is not an object
+    #[inline]
+    fn try_get<Q: ?Sized>(&self, k: &Q) -> Result<Option<&Self::Target>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        Ok(self
+            .as_object()
+            .ok_or_else(|| TryTypeError {
+                expected: ValueType::Object,
+                got: self.value_type(),
+            })?
+            .get(k))
     }
 
     /// Checks if a Value contains a given key. This will return
@@ -209,6 +707,21 @@ pub trait ValueAccess: Sized {
         self.as_array().and_then(|a| a.get(i))
     }
 
+    /// Tries to get a value based on n index, returns a type error if the
+    /// current value isn't an Array, returns `None` if the index is out of bouds
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
+    #[inline]
+    fn try_get_idx(&self, i: usize) -> Result<Option<&Self::Target>, TryTypeError> {
+        Ok(self
+            .as_array()
+            .ok_or_else(|| TryTypeError {
+                expected: ValueType::Array,
+                got: self.value_type(),
+            })?
+            .get(i))
+    }
+
     /// Tries to get an element of an object as a bool
     #[inline]
     #[must_use]
@@ -220,15 +733,17 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_bool)
     }
 
-    /// Tries to represent the value as a bool
-    #[must_use]
-    fn as_bool(&self) -> Option<bool>;
-
-    /// Tries to represent the value as an i128
+    /// Tries to get an element of an object as a bool, returns
+    /// an error if it isn't bool
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    #[must_use]
-    fn as_i128(&self) -> Option<i128> {
-        self.as_i64().and_then(|u| u.try_into().ok())
+    fn try_get_bool<Q: ?Sized>(&self, k: &Q) -> Result<Option<bool>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)?.map(ValueAccess::try_as_bool).transpose()
     }
 
     /// Tries to get an element of an object as a i128
@@ -242,11 +757,20 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_i128)
     }
 
-    /// Tries to represent the value as an i64
-    #[must_use]
-    fn as_i64(&self) -> Option<i64>;
-    /// Tries to get an element of an object as a i64
+    /// Tries to get an element of an object as a i128, returns
+    /// an error if it isn't i128
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
+    #[inline]
+    fn try_get_i128<Q: ?Sized>(&self, k: &Q) -> Result<Option<i128>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)?.map(ValueAccess::try_as_i128).transpose()
+    }
 
+    /// Tries to get an element of an object as a i64
     #[inline]
     #[must_use]
     fn get_i64<Q: ?Sized>(&self, k: &Q) -> Option<i64>
@@ -257,11 +781,17 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_i64)
     }
 
-    /// Tries to represent the value as an i32
+    /// Tries to get an element of an object as a i64, returns
+    /// an error if it isn't a i64
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    #[must_use]
-    fn as_i32(&self) -> Option<i32> {
-        self.as_i64().and_then(|u| u.try_into().ok())
+    fn try_get_i64<Q: ?Sized>(&self, k: &Q) -> Result<Option<i64>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)?.map(ValueAccess::try_as_i64).transpose()
     }
 
     /// Tries to get an element of an object as a i32
@@ -275,11 +805,17 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_i32)
     }
 
-    /// Tries to represent the value as an i16
+    /// Tries to get an element of an object as a i32, returns
+    /// an error if it isn't a i32
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    #[must_use]
-    fn as_i16(&self) -> Option<i16> {
-        self.as_i64().and_then(|u| u.try_into().ok())
+    fn try_get_i32<Q: ?Sized>(&self, k: &Q) -> Result<Option<i32>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)?.map(ValueAccess::try_as_i32).transpose()
     }
 
     /// Tries to get an element of an object as a i16
@@ -292,12 +828,17 @@ pub trait ValueAccess: Sized {
     {
         self.get(k).and_then(ValueAccess::as_i16)
     }
-
-    /// Tries to represent the value as an i8
+    /// Tries to get an element of an object as a i16, returns
+    /// an error if it isn't a i16
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    #[must_use]
-    fn as_i8(&self) -> Option<i8> {
-        self.as_i64().and_then(|u| u.try_into().ok())
+    fn try_get_i16<Q: ?Sized>(&self, k: &Q) -> Result<Option<i16>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)?.map(ValueAccess::try_as_i16).transpose()
     }
 
     /// Tries to get an element of an object as a i8
@@ -311,11 +852,17 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_i8)
     }
 
-    /// Tries to represent the value as an u128
+    /// Tries to get an element of an object as a i8, returns
+    /// an error if it isn't a i8
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    #[must_use]
-    fn as_u128(&self) -> Option<u128> {
-        self.as_u64().and_then(|u| u.try_into().ok())
+    fn try_get_i8<Q: ?Sized>(&self, k: &Q) -> Result<Option<i8>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)?.map(ValueAccess::try_as_i8).transpose()
     }
 
     /// Tries to get an element of an object as a u128
@@ -329,9 +876,18 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_u128)
     }
 
-    /// Tries to represent the value as an u64
-    #[must_use]
-    fn as_u64(&self) -> Option<u64>;
+    /// Tries to get an element of an object as a u128, returns
+    /// an error if it isn't a u128
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
+    #[inline]
+    fn try_get_u128<Q: ?Sized>(&self, k: &Q) -> Result<Option<u128>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)?.map(ValueAccess::try_as_u128).transpose()
+    }
 
     /// Tries to get an element of an object as a u64
     #[inline]
@@ -344,11 +900,17 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_u64)
     }
 
-    /// Tries to represent the value as an usize
+    /// Tries to get an element of an object as a u64, returns
+    /// an error if it isn't a u64
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    #[must_use]
-    fn as_usize(&self) -> Option<usize> {
-        self.as_u64().and_then(|u| u.try_into().ok())
+    fn try_get_u64<Q: ?Sized>(&self, k: &Q) -> Result<Option<u64>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)?.map(ValueAccess::try_as_u64).transpose()
     }
 
     /// Tries to get an element of an object as a usize
@@ -362,11 +924,17 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_usize)
     }
 
-    /// Tries to represent the value as an u32
+    /// Tries to get an element of an object as a usize, returns
+    /// an error if it isn't a usize
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    #[must_use]
-    fn as_u32(&self) -> Option<u32> {
-        self.as_u64().and_then(|u| u.try_into().ok())
+    fn try_get_usize<Q: ?Sized>(&self, k: &Q) -> Result<Option<usize>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)?.map(ValueAccess::try_as_usize).transpose()
     }
 
     /// Tries to get an element of an object as a u32
@@ -380,11 +948,17 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_u32)
     }
 
-    /// Tries to represent the value as an u16
+    /// Tries to get an element of an object as a u32, returns
+    /// an error if it isn't a u32
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    #[must_use]
-    fn as_u16(&self) -> Option<u16> {
-        self.as_u64().and_then(|u| u.try_into().ok())
+    fn try_get_u32<Q: ?Sized>(&self, k: &Q) -> Result<Option<u32>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)?.map(ValueAccess::try_as_u32).transpose()
     }
 
     /// Tries to get an element of an object as a u16
@@ -398,11 +972,17 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_u16)
     }
 
-    /// Tries to represent the value as an u8
+    /// Tries to get an element of an object as a u16, returns
+    /// an error if it isn't a u16
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    #[must_use]
-    fn as_u8(&self) -> Option<u8> {
-        self.as_u64().and_then(|u| u.try_into().ok())
+    fn try_get_u16<Q: ?Sized>(&self, k: &Q) -> Result<Option<u16>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)?.map(ValueAccess::try_as_u16).transpose()
     }
 
     /// Tries to get an element of an object as a u8
@@ -416,9 +996,18 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_u8)
     }
 
-    /// Tries to represent the value as a f64
-    #[must_use]
-    fn as_f64(&self) -> Option<f64>;
+    /// Tries to get an element of an object as a u8, returns
+    /// an error if it isn't a u8
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
+    #[inline]
+    fn try_get_u8<Q: ?Sized>(&self, k: &Q) -> Result<Option<u8>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)?.map(ValueAccess::try_as_u8).transpose()
+    }
 
     /// Tries to get an element of an object as a f64
     #[inline]
@@ -431,34 +1020,17 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_f64)
     }
 
-    /// Casts the current value to a f64 if possible, this will turn integer
-    /// values into floats.
-    #[must_use]
+    /// Tries to get an element of an object as a u8, returns
+    /// an error if it isn't a u8
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    #[allow(clippy::cast_precision_loss, clippy::option_if_let_else)]
-    fn cast_f64(&self) -> Option<f64> {
-        if let Some(f) = self.as_f64() {
-            Some(f)
-        } else if let Some(u) = self.as_u128() {
-            Some(u as f64)
-        } else {
-            self.as_i128().map(|i| i as f64)
-        }
-    }
-
-    /// Tries to represent the value as a f32
-    #[allow(clippy::cast_possible_truncation)]
-    #[inline]
-    #[must_use]
-    fn as_f32(&self) -> Option<f32> {
-        self.as_f64().and_then(|u| {
-            if u <= f64::from(std::f32::MAX) && u >= f64::from(std::f32::MIN) {
-                // Since we check above
-                Some(u as f32)
-            } else {
-                None
-            }
-        })
+    fn try_get_f64<Q: ?Sized>(&self, k: &Q) -> Result<Option<f64>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)?.map(ValueAccess::try_as_f64).transpose()
     }
 
     /// Tries to get an element of an object as a f32
@@ -472,15 +1044,17 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_f32)
     }
 
-    /// Tries to represent the value as a &str
-    #[must_use]
-    fn as_str(&self) -> Option<&str>;
-
-    /// Tries to represent the value as a Char
+    /// Tries to get an element of an object as a f32, returns
+    /// an error if it isn't a f32
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    #[must_use]
-    fn as_char(&self) -> Option<char> {
-        self.as_str().and_then(|s| s.chars().next())
+    fn try_get_f32<Q: ?Sized>(&self, k: &Q) -> Result<Option<f32>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)?.map(ValueAccess::try_as_f32).transpose()
     }
 
     /// Tries to get an element of an object as a str
@@ -494,9 +1068,19 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_str)
     }
 
-    /// Tries to represent the value as an array and returns a refference to it
-    #[must_use]
-    fn as_array(&self) -> Option<&Self::Array>;
+    /// Tries to get an element of an object as a str, returns
+    /// an error if it isn't a str
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
+    #[inline]
+    fn try_get_str<Q: ?Sized>(&self, k: &Q) -> Result<Option<&str>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)
+            .and_then(|s| s.map(ValueAccess::try_as_str).transpose())
+    }
 
     /// Tries to get an element of an object as a array
     #[inline]
@@ -512,9 +1096,22 @@ pub trait ValueAccess: Sized {
         self.get(k).and_then(ValueAccess::as_array)
     }
 
-    /// Tries to represent the value as an object and returns a refference to it
-    #[must_use]
-    fn as_object(&self) -> Option<&Self::Object>;
+    /// Tries to get an element of an object as an array, returns
+    /// an error if it isn't a array
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
+    #[inline]
+    fn try_get_array<Q: ?Sized>(
+        &self,
+        k: &Q,
+    ) -> Result<Option<&<<Self as ValueAccess>::Target as ValueAccess>::Array>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)
+            .and_then(|s| s.map(ValueAccess::try_as_array).transpose())
+    }
 
     /// Tries to get an element of an object as a object
     #[inline]
@@ -528,6 +1125,24 @@ pub trait ValueAccess: Sized {
         Q: Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_object)
+    }
+
+    /// Tries to get an element of an object as an object, returns
+    /// an error if it isn't an object
+    ///
+    /// # Errors
+    /// if the requested type doesn't match the actual type or the value is not an object
+    #[inline]
+    fn try_get_object<Q: ?Sized>(
+        &self,
+        k: &Q,
+    ) -> Result<Option<&<<Self as ValueAccess>::Target as ValueAccess>::Object>, TryTypeError>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: Hash + Eq + Ord,
+    {
+        self.try_get(k)
+            .and_then(|s| s.map(ValueAccess::try_as_object).transpose())
     }
 }
 /// The `Value` exposes common interface for values, this allows using both
@@ -552,10 +1167,6 @@ pub trait Value:
     + PartialEq<()>
     + ValueAccess
 {
-    /// Returns the type of the current Valye
-    #[must_use]
-    fn value_type(&self) -> ValueType;
-
     /// returns true if the current value is null
     #[must_use]
     fn is_null(&self) -> bool;
