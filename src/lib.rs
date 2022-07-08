@@ -92,6 +92,29 @@ pub enum ExtendedValueType {
     None,
 }
 
+impl Default for ExtendedValueType {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+impl fmt::Display for ExtendedValueType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::I32 => write!(f, "i32"),
+            Self::I16 => write!(f, "i16"),
+            Self::I8 => write!(f, "i8"),
+            Self::U32 => write!(f, "u32"),
+            Self::U16 => write!(f, "u16"),
+            Self::U8 => write!(f, "u8"),
+            Self::Usize => write!(f, "usize"),
+            Self::F32 => write!(f, "f32"),
+            Self::Char => write!(f, "char"),
+            Self::None => write!(f, "none"),
+        }
+    }
+}
+
 /// Types of JSON values
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum ValueType {
@@ -120,6 +143,25 @@ pub enum ValueType {
     #[cfg(feature = "custom-types")]
     /// a custom type
     Custom(&'static str),
+}
+impl fmt::Display for ValueType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Null => write!(f, "null"),
+            Self::Bool => write!(f, "bool"),
+            Self::I64 => write!(f, "i64"),
+            Self::I128 => write!(f, "i128"),
+            Self::U64 => write!(f, "u64"),
+            Self::U128 => write!(f, "u128"),
+            Self::F64 => write!(f, "f64"),
+            Self::String => write!(f, "string"),
+            Self::Array => write!(f, "array"),
+            Self::Object => write!(f, "object"),
+            Self::Extended(ty) => write!(f, "{}", ty),
+            #[cfg(feature = "custom-types")]
+            Self::Custom(name) => write!(f, "{}", name),
+        }
+    }
 }
 
 impl Default for ValueType {
