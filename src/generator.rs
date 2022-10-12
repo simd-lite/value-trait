@@ -257,8 +257,11 @@ pub trait BaseGenerator {
     #[inline(always)]
     #[allow(clippy::cast_possible_wrap, clippy::cast_ptr_alignment)]
     /// Writes a string with simd-acceleration
+    /// # Safety
+    /// This function is unsafe because it uses simd instructions
+    /// # Errors
+    ///  if the write fails
     unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
-        let writer = self.get_writer();
         #[cfg(target_arch = "x86")]
         use std::arch::x86::{
             __m256i, _mm256_and_si256, _mm256_cmpeq_epi8, _mm256_loadu_si256, _mm256_movemask_epi8,
@@ -270,6 +273,7 @@ pub trait BaseGenerator {
             _mm256_or_si256, _mm256_set1_epi8, _mm256_xor_si256,
         };
 
+        let writer = self.get_writer();
         let mut idx = 0;
         let zero = _mm256_set1_epi8(0);
         let lower_quote_range = _mm256_set1_epi8(0x1F_i8);
@@ -319,8 +323,11 @@ pub trait BaseGenerator {
     #[inline(always)]
     #[allow(clippy::cast_possible_wrap, clippy::cast_ptr_alignment)]
     /// Writes a string with simd-acceleration
+    /// # Safety
+    /// This function is unsafe because it uses simd instructions
+    /// # Errors
+    ///  if the write fails
     unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
-        let writer = self.get_writer();
         #[cfg(target_arch = "x86")]
         use std::arch::x86::{
             __m128i, _mm_and_si128, _mm_cmpeq_epi8, _mm_loadu_si128, _mm_movemask_epi8,
@@ -332,6 +339,7 @@ pub trait BaseGenerator {
             _mm_or_si128, _mm_set1_epi8, _mm_xor_si128,
         };
 
+        let writer = self.get_writer();
         let mut idx = 0;
         let zero = _mm_set1_epi8(0);
         let lower_quote_range = _mm_set1_epi8(0x1F_i8);
@@ -375,6 +383,10 @@ pub trait BaseGenerator {
     #[cfg(target_arch = "arm")]
     #[inline(always)]
     /// Writes a string with simd-acceleration
+    /// # Safety
+    /// This function is unsafe because it uses simd instructions
+    /// # Errors
+    ///  if the write fails
     unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
         self.write_simple_string(std::str::from_utf8_unchecked(string))
     }
@@ -382,8 +394,11 @@ pub trait BaseGenerator {
     #[cfg(target_arch = "aarch64")]
     #[inline(always)]
     /// Writes a string with simd-acceleration
+    /// # Safety
+    /// This function is unsafe because it uses simd instructions
+    /// # Errors
+    ///  if the write fails
     unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
-        let writer = self.get_writer();
         use std::arch::aarch64::{
             uint8x16_t, vandq_u8, vceqq_u8, vdupq_n_u8, veorq_u8, vgetq_lane_u16, vld1q_u8,
             vorrq_u8, vpaddq_u8, vreinterpretq_u16_u8,
@@ -408,6 +423,7 @@ pub trait BaseGenerator {
             vgetq_lane_u16(vreinterpretq_u16_u8(tmp), 0)
         }
 
+        let writer = self.get_writer();
         // The case where we have a 16+ byte block
         // we repeate the same logic as above but with
         // only 16 bytes
@@ -452,6 +468,10 @@ pub trait BaseGenerator {
     #[cfg(all(target_arch = "wasm32", target_feature = "simd128"))]
     #[inline(always)]
     /// Writes a string with simd-acceleration
+    /// # Safety
+    /// This function is unsafe because it uses simd instructions
+    /// # Errors
+    ///  if the write fails
     unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
         let writer = self.get_writer();
         use std::arch::wasm32::{

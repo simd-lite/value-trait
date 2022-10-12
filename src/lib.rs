@@ -43,7 +43,7 @@ pub use array::Array;
 pub use node::StaticNode;
 pub use object::Object;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// An access error for `ValueType`
 pub enum AccessError {
     /// An access attempt to a Value was made under the
@@ -68,7 +68,7 @@ impl fmt::Display for AccessError {
 impl std::error::Error for AccessError {}
 
 /// Extended types that have no native representation in JSON
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExtendedValueType {
     /// A 32 bit signed integer value
     I32,
@@ -116,7 +116,7 @@ impl fmt::Display for ExtendedValueType {
 }
 
 /// Types of JSON values
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ValueType {
     /// null
     Null,
@@ -199,6 +199,7 @@ pub trait Writable {
         W: 'writer + Write;
 }
 
+#[allow(clippy::trait_duplication_in_bounds)] // This is a bug From<()> is counted as duplicate
 /// Support of builder methods for traits.
 pub trait Builder<'input>:
     Default
