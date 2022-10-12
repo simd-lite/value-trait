@@ -744,3 +744,12 @@ where
     *string = &string[idx..];
     Ok(())
 }
+
+#[cfg(target_arch = "arm")]
+#[inline(always)]
+pub(crate) unsafe fn write_str_simd<W>(_writer: &mut W, _string: &mut &[u8]) -> io::Result<()>
+where
+    W: std::io::Write,
+{
+    todo!("write_str_simd  not implemented for ARM 32 bits")
+}
