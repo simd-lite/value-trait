@@ -142,14 +142,24 @@ pub trait BaseGenerator {
     /// if the write fails
     #[inline(always)]
     fn write_string(&mut self, string: &str) -> io::Result<()> {
-        stry!(self.write_char(b'"'));
-        stry!(self.write_string_content(string));
-        self.write_char(b'"')
+        #[cfg(target_arch = "arm")]
+        {
+            self.write_simple_string(string)
+        }
+
+        // The default implementation uses simd
+        #[cfg(not(target_arch = "arm"))]
+        {
+            stry!(self.write_char(b'"'));
+            stry!(self.write_string_content(string));
+            self.write_char(b'"')
+        }
     }
 
     /// writes a string
     /// # Errors
     /// if the write fails
+    #[cfg(not(target_arch = "arm"))]
     #[inline(always)]
     fn write_string_content(&mut self, string: &str) -> io::Result<()> {
         let mut string = string.as_bytes();
@@ -623,7 +633,7 @@ where
     Ok(())
 }
 
-#[cfg(all(target_arch = "aarch64"))]
+#[cfg(target_arch = "aarch64")]
 #[inline(always)]
 pub(crate) unsafe fn write_str_simd<W>(writer: &mut W, string: &mut &[u8]) -> io::Result<()>
 where
@@ -743,13 +753,4 @@ where
     stry!(writer.write_all(&string[0..idx]));
     *string = &string[idx..];
     Ok(())
-}
-
-#[cfg(target_arch = "arm")]
-#[inline(always)]
-pub(crate) unsafe fn write_str_simd<W>(_writer: &mut W, _string: &mut &[u8]) -> io::Result<()>
-where
-    W: std::io::Write,
-{
-    todo!("write_str_simd not implemented for ARM 32 bits")
 }
