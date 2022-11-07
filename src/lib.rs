@@ -239,12 +239,21 @@ pub trait Builder<'input>:
 }
 
 /// A type error thrown by the `try_*` functions
+#[derive(Clone, Debug)]
 pub struct TryTypeError {
     /// The expected value type
     pub expected: ValueType,
     /// The actual value type
     pub got: ValueType,
 }
+
+impl std::fmt::Display for TryTypeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Expected type {}, got {}", self.expected, self.got)
+    }
+}
+
+impl std::error::Error for TryTypeError {}
 
 /// A trait that specifies how to turn the Value `into` it's sub types
 pub trait ValueInto: Sized + ValueAccess {
