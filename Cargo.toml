@@ -16,7 +16,7 @@ itoa = "1"
 ryu = "1"
 halfbrown = { version = "0.1", optional = true }
 float-cmp = "0.9"
-hashbrown = { version = "0.12", optional = true }
+hashbrown = { version = "0.13", optional = true }
 abi_stable = { version = "0.10.3", optional = true, default-features = false }
 
 [features]
