@@ -7,92 +7,72 @@ jobs:
     strategy:
       matrix:
         rustflags:
-          - "-C target-cpu=native"
-          - "-C target-cpu=native -C target-feature=-avx2"
+          - flags: "-C target-cpu=native"
+            name: "avx2"
+          - flags: "-C target-cpu=native -C target-feature=-avx2"
+            name: "sse"
+        features:
+          - "128bit"
+          - "custom-types"
+          - "c-abi"
+          - "hashbrown"
+          - "halfbrown"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
           override: true
+          components: clippy, rustfmt
       - name: Validate cargo format
         run: cargo fmt -- --check
-      - name: Install clippy
-        run: rustup component add clippy
-      - uses: actions-rs/clippy-check@v1
+      - name: Check workflow permissions
+        id: check_permissions
+        uses: scherermichael-oss/action-has-permission@1.0.6
+        with:
+          required-permission: write
         env:
-          RUSTFLAGS: ${{ matrix.rustflags }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run clippy action to produce annotations
+        uses: actions-rs/clippy-check@v1
+        if: steps.check_permissions.outputs.has-permission
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all
-  tarpaulin-sse:
+      - name: Run clippy manually without annotations
+        if: ${{ !steps.check_permissions.outputs.has-permission }}
+        env:
+          RUSTFLAGS: ${{ matrix.rustflags.flags }}
+        run: cargo clippy --all --features ${{ matrix.features }}
+      - uses: actions-rs/clippy-check@v1
+        env:
+          RUSTFLAGS: ${{ matrix.rustflags.flags }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all --features ${{ matrix.features }}
+  coverage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
           override: true
-      - name: Run cargo-tarpaulin
-        uses: actions-rs/tarpaulin@v0.1
+          components: llvm-tools-preview
+      - name: Install cargo-llcm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Generate code coverage
         env:
-          RUSTFLAGS: "-C target-cpu=native -C target-feature=-avx2"
+          RUSTFLAGS: ${{ matrix.rustflags.flags }}
           PROPTEST_CASES: 512
+        run: cargo llvm-cov --lcov --output-path lcov.txt --features ${{ matrix.features }}
+      - uses: codecov/codecov-action@v3
         with:
-          version: "0.14.2"
-      - uses: codecov/codecov-action@v1.0.2
-        with:
-          token: ${{secrets.CODECOV_TOKEN}} #required
-          file: ./cobertura.xml
-          flags: sse
-  tarpaulin-avx2:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - name: Run cargo-tarpaulin
-        uses: actions-rs/tarpaulin@v0.1
-        env:
-          RUSTFLAGS: "-C target-cpu=native"
-          PROPTEST_CASES: 512
-        with:
-          version: "0.14.2"
-      - uses: codecov/codecov-action@v1.0.2
-        with:
-          token: ${{secrets.CODECOV_TOKEN}} #required
-          file: ./cobertura.xml
-          flags: avx2
-  tarpaulin-sse-known-key:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - name: Run cargo-tarpaulin
-        uses: actions-rs/tarpaulin@v0.1
-        env:
-          RUSTFLAGS: "-C target-cpu=native -C target-feature=-avx2"
-          PROPTEST_CASES: 512
-        with:
-          version: "0.14.2"
-          args: "--features 128bit"
-      - uses: codecov/codecov-action@v1.0.2
-        with:
-          token: ${{secrets.CODECOV_TOKEN}} #required
-          file: ./cobertura.xml
-          flags: sseKnownKey
-  tarpaulin-avx2-known-key:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - name: Run cargo-tarpaulin
-        uses: actions-rs/tarpaulin@v0.1
-        env:
-          RUSTFLAGS: "-C target-cpu=native"
-          PROPTEST_CASES: 512
-        with:
-          version: "0.14.2"
-          args: "--features 128bit"
-      - uses: codecov/codecov-action@v1.0.2
-        with:
-          token: ${{secrets.CODECOV_TOKEN}} #required
-          file: ./cobertura.xml
-          flags: avx2KnownKey
+          # token: ${{secrets.CODECOV_TOKEN}} # not required, we are a public repo
+          file: ./lcov.xml
+          flags: "${{ matrix.features }}-${{ matrix.rustflags.name }}"
+          fail_ci_if_error: ${{ github.event_name == 'pull_request' }}
+          verbose: true
