@@ -79,7 +79,7 @@ jobs:
       - uses: codecov/codecov-action@v3
         with:
           # token: ${{secrets.CODECOV_TOKEN}} # not required, we are a public repo
-          file: ./lcov.xml
+          file: ./lcov.txt
           flags: "${{ matrix.features }}-${{ matrix.rustflags.name }}"
           fail_ci_if_error: ${{ github.event_name == 'pull_request' }}
           verbose: true
