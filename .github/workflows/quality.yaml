@@ -40,18 +40,12 @@ jobs:
         if: steps.check_permissions.outputs.has-permission
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all
+          args: --all --features ${{ matrix.features }}
       - name: Run clippy manually without annotations
         if: ${{ !steps.check_permissions.outputs.has-permission }}
         env:
           RUSTFLAGS: ${{ matrix.rustflags.flags }}
         run: cargo clippy --all --features ${{ matrix.features }}
-      - uses: actions-rs/clippy-check@v1
-        env:
-          RUSTFLAGS: ${{ matrix.rustflags.flags }}
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all --features ${{ matrix.features }}
   coverage:
     runs-on: ubuntu-latest
     steps:
