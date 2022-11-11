@@ -47,6 +47,19 @@ jobs:
           RUSTFLAGS: ${{ matrix.rustflags.flags }}
         run: cargo clippy --all --features ${{ matrix.features }}
   coverage:
+    strategy:
+      matrix:
+        rustflags:
+          - flags: "-C target-cpu=native"
+            name: "avx2"
+          - flags: "-C target-cpu=native -C target-feature=-avx2"
+            name: "sse"
+        features:
+          - "128bit"
+          - "custom-types"
+          - "c-abi"
+          - "hashbrown"
+          - "halfbrown"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
