@@ -107,7 +107,7 @@ where
 
     #[inline]
     fn push(&mut self, e: T) {
-        abi_stable::std_types::RVec::push(self, e)
+        abi_stable::std_types::RVec::push(self, e);
     }
 
     fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = &T> + 'i> {
