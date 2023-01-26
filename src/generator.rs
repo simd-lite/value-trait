@@ -283,7 +283,7 @@ pub trait BaseGenerator {
         Ok(())
     }
 
-    #[cfg(target_feature = "sse2")]
+    #[cfg(all(not(target_feature = "avx2"), target_feature = "sse2"))]
     #[inline(always)]
     #[allow(clippy::cast_possible_wrap, clippy::cast_ptr_alignment)]
     /// Writes a string with simd-acceleration
