@@ -29,3 +29,6 @@ custom-types = []
 
 # Support for abi-stable's `StableAbi` implementation
 c-abi = ["abi_stable"]
+
+# Allow fallback to non simd CPUs
+allow-non-simd = []
