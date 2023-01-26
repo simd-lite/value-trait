@@ -11,6 +11,9 @@ jobs:
             name: "avx2"
           - flags: "-C target-cpu=native -C target-feature=-avx2"
             name: "sse"
+        rustversion:
+          - "1.61.0"
+          - "stable"
         features:
           - "128bit"
           - "custom-types"
@@ -23,7 +26,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: "1.59.0"
+          toolchain: ${{ matrix.rustversion }}
           override: true
           components: clippy, rustfmt
       - name: Validate cargo format
@@ -66,7 +69,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: "1.59.0"
+          toolchain: ${{ matrix.rustversion }}
           override: true
           components: llvm-tools-preview
       - name: Install cargo-llcm-cov
