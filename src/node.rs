@@ -253,22 +253,22 @@ impl fmt::Display for StaticNode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Null => write!(f, "null"),
-            Self::Bool(b) => write!(f, "{}", b),
-            Self::I64(n) => write!(f, "{}", n),
-            Self::U64(n) => write!(f, "{}", n),
-            Self::F64(n) => write!(f, "{}", n),
+            Self::Bool(b) => write!(f, "{b}"),
+            Self::I64(n) => write!(f, "{n}"),
+            Self::U64(n) => write!(f, "{n}"),
+            Self::F64(n) => write!(f, "{n}"),
         }
     }
     #[cfg(feature = "128bit")]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Null => write!(f, "null"),
-            Self::Bool(b) => write!(f, "{}", b),
-            Self::I64(n) => write!(f, "{}", n),
-            Self::U64(n) => write!(f, "{}", n),
-            Self::F64(n) => write!(f, "{}", n),
-            Self::I128(n) => write!(f, "{}", n),
-            Self::U128(n) => write!(f, "{}", n),
+            Self::Bool(b) => write!(f, "{b}"),
+            Self::I64(n) => write!(f, "{n}"),
+            Self::U64(n) => write!(f, "{n}"),
+            Self::F64(n) => write!(f, "{n}"),
+            Self::I128(n) => write!(f, "{n}"),
+            Self::U128(n) => write!(f, "{n}"),
         }
     }
 }

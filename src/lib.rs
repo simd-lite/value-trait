@@ -157,9 +157,9 @@ impl fmt::Display for ValueType {
             Self::String => write!(f, "string"),
             Self::Array => write!(f, "array"),
             Self::Object => write!(f, "object"),
-            Self::Extended(ty) => write!(f, "{}", ty),
+            Self::Extended(ty) => write!(f, "{ty}"),
             #[cfg(feature = "custom-types")]
-            Self::Custom(name) => write!(f, "{}", name),
+            Self::Custom(name) => write!(f, "{name}"),
         }
     }
 }
