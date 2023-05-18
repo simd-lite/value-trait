@@ -455,7 +455,6 @@ pub trait BaseGenerator {
         use std::arch::wasm32::{
             u8x16_bitmask, u8x16_eq, u8x16_splat, v128, v128_and, v128_load, v128_or, v128_xor,
         };
-        let writer = self._get_writer();
 
         // The case where we have a 16+ byte block
         // we repeat the same logic as above but with
