@@ -2,9 +2,9 @@
 use halfbrown::HashMap as Halfbrown;
 #[cfg(feature = "hashbrown")]
 use hashbrown::HashMap as Hashbrown;
-use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::{borrow::Borrow, hash::BuildHasher};
 
 /// A JSON Object
 pub trait Object {
@@ -68,9 +68,10 @@ pub trait Object {
 }
 
 #[cfg(feature = "halfbrown")]
-impl<MapK, MapE> Object for Halfbrown<MapK, MapE>
+impl<MapK, MapE, S> Object for Halfbrown<MapK, MapE, S>
 where
     MapK: Hash + Eq,
+    S: BuildHasher + Default,
 {
     type Key = MapK;
     type Element = MapE;
@@ -133,7 +134,7 @@ where
     }
 }
 
-impl<MapK, MapE, S: ::std::hash::BuildHasher> Object for HashMap<MapK, MapE, S>
+impl<MapK, MapE, S: BuildHasher> Object for HashMap<MapK, MapE, S>
 where
     MapK: Hash + Eq,
 {
@@ -199,7 +200,7 @@ where
 }
 
 #[cfg(feature = "hashbrown")]
-impl<MapK, MapE, S: ::std::hash::BuildHasher> Object for Hashbrown<MapK, MapE, S>
+impl<MapK, MapE, S: BuildHasher> Object for Hashbrown<MapK, MapE, S>
 where
     MapK: Hash + Eq,
 {
