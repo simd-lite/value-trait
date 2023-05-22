@@ -75,7 +75,7 @@ pub trait BaseGenerator {
     /// The writer
     type T: Write;
 
-    /// returns teh writer
+    /// returns the writer
     fn get_writer(&mut self) -> &mut Self::T;
 
     /// Write a slice
@@ -564,7 +564,7 @@ pub struct PrettyGenerator<V: Value> {
 }
 
 impl<V: Value> PrettyGenerator<V> {
-    /// Creates a new pretty priting generator
+    /// Creates a new pretty printing generator
     #[must_use]
     pub fn new(spaces: u16) -> Self {
         Self {

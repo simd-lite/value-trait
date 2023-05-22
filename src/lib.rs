@@ -128,7 +128,7 @@ pub enum ValueType {
     I128,
     /// a unsigned integer type
     U64,
-    /// a 128 bit unsiged integer
+    /// a 128 bit unsigned integer
     U128,
     /// a float type
     F64,
@@ -634,11 +634,11 @@ pub trait ValueAccess: Sized {
         })
     }
 
-    /// Tries to represent the value as an array and returns a refference to it
+    /// Tries to represent the value as an array and returns a reference to it
     #[must_use]
     fn as_array(&self) -> Option<&Self::Array>;
 
-    /// Tries to represent the value as an array and returns a refference to it
+    /// Tries to represent the value as an array and returns a reference to it
     /// # Errors
     /// if the requested type doesn't match the actual type
     #[inline]
@@ -649,11 +649,11 @@ pub trait ValueAccess: Sized {
         })
     }
 
-    /// Tries to represent the value as an object and returns a refference to it
+    /// Tries to represent the value as an object and returns a reference to it
     #[must_use]
     fn as_object(&self) -> Option<&Self::Object>;
 
-    /// Tries to represent the value as an object and returns a refference to it
+    /// Tries to represent the value as an object and returns a reference to it
     /// # Errors
     /// if the requested type doesn't match the actual type
     #[inline]
@@ -677,7 +677,7 @@ pub trait ValueAccess: Sized {
         self.as_object().and_then(|a| a.get(k))
     }
 
-    /// Trys to get a value based on a key, returns a `TryTypeError` if the
+    /// Tries to get a value based on a key, returns a `TryTypeError` if the
     /// current Value isn't an Object, returns `None` if the key isn't in the object
     /// # Errors
     /// if the value is not an object
@@ -718,7 +718,7 @@ pub trait ValueAccess: Sized {
     }
 
     /// Tries to get a value based on n index, returns a type error if the
-    /// current value isn't an Array, returns `None` if the index is out of bouds
+    /// current value isn't an Array, returns `None` if the index is out of bounds
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
@@ -1156,7 +1156,7 @@ pub trait ValueAccess: Sized {
     }
 }
 /// The `Value` exposes common interface for values, this allows using both
-/// `BorrowedValue` and `OwnedValue` nearly interchangable
+/// `BorrowedValue` and `OwnedValue` nearly interchangeable
 pub trait Value:
     Sized
     + Index<usize>
@@ -1424,7 +1424,7 @@ pub trait Mutable: IndexMut<usize> + Value + Sized {
     }
 
     /// Tries to push to a `Value` if as an `Array`.
-    /// This funciton will have no effect if `Value` is of
+    /// This function will have no effect if `Value` is of
     /// a different type
     fn try_push<V>(&mut self, v: V)
     where
@@ -1470,9 +1470,9 @@ pub trait Mutable: IndexMut<usize> + Value + Sized {
     fn get_idx_mut(&mut self, i: usize) -> Option<&mut Self::Target> {
         self.as_array_mut().and_then(|a| a.get_mut(i))
     }
-    /// Tries to represent the value as an array and returns a mutable refference to it
+    /// Tries to represent the value as an array and returns a mutable reference to it
     fn as_array_mut(&mut self) -> Option<&mut <Self as ValueAccess>::Array>;
-    /// Tries to represent the value as an object and returns a mutable refference to it
+    /// Tries to represent the value as an object and returns a mutable reference to it
     fn as_object_mut(&mut self) -> Option<&mut Self::Object>;
 }
 
