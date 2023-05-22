@@ -1430,7 +1430,7 @@ pub trait Mutable: IndexMut<usize> + Value + Sized {
     where
         V: Into<<Self as ValueAccess>::Target>,
     {
-        let _ = self.push(v);
+        let _: Result<_, _> = self.push(v);
     }
 
     /// Pops from this `Value` as an `Array`.
