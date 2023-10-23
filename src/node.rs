@@ -168,7 +168,6 @@ impl ValueAccess for StaticNode {
     #[cfg(not(feature = "128bit"))]
     #[inline]
     #[must_use]
-    #[allow(clippy::cast_sign_loss)]
     fn as_u64(&self) -> Option<u64> {
         match self {
             Self::I64(i) => u64::try_from(*i).ok(),
@@ -180,7 +179,6 @@ impl ValueAccess for StaticNode {
     #[cfg(feature = "128bit")]
     #[inline]
     #[must_use]
-    #[allow(clippy::cast_sign_loss)]
     fn as_u64(&self) -> Option<u64> {
         match self {
             Self::I64(i) => u64::try_from(*i).ok(),
@@ -193,7 +191,6 @@ impl ValueAccess for StaticNode {
     #[cfg(feature = "128bit")]
     #[inline]
     #[must_use]
-    #[allow(clippy::cast_sign_loss)]
     fn as_u128(&self) -> Option<u128> {
         match self {
             Self::U128(i) => Some(*i),
@@ -309,7 +306,7 @@ impl PartialEq for StaticNode {
             (Self::U64(v1), Self::U128(v2)) => v2.eq(&u128::from(*v1)),
 
             (Self::I64(v1), Self::U64(v2)) if *v1 >= 0 => (*v1 as u64).eq(v2),
-            (Self::I64(v1), Self::I128(v2)) => (*v2 as i128).eq(&i128::from(*v1)),
+            (Self::I64(v1), Self::I128(v2)) => (*v2).eq(&i128::from(*v1)),
             (Self::I64(v1), Self::U128(v2)) if *v1 >= 0 => v2.eq(&(*v1 as u128)),
 
             (Self::U128(v1), Self::I128(v2)) if *v2 >= 0 => (*v2 as u128).eq(v1),

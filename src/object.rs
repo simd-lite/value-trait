@@ -17,17 +17,17 @@ pub trait Object {
     /// current Value isn't an Object or doesn't contain the key
     /// it was asked for.
     #[must_use]
-    fn get<Q: ?Sized>(&self, k: &Q) -> Option<&Self::Element>
+    fn get<Q>(&self, k: &Q) -> Option<&Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord;
+        Q: ?Sized + Hash + Eq + Ord;
 
     /// Gets the value of a key as a mutable reference.
     #[must_use]
-    fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut Self::Element>
+    fn get_mut<Q>(&mut self, k: &Q) -> Option<&mut Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord;
+        Q: ?Sized + Hash + Eq + Ord;
 
     /// Inserts a value
     #[must_use]
@@ -39,10 +39,10 @@ pub trait Object {
 
     /// Removes a value from the object
     #[must_use]
-    fn remove<Q: ?Sized>(&mut self, k: &Q) -> Option<Self::Element>
+    fn remove<Q>(&mut self, k: &Q) -> Option<Self::Element>
     where
         Self::Key: Borrow<Q>,
-        Q: Hash + Eq + Ord;
+        Q: ?Sized + Hash + Eq + Ord;
 
     /// Iterates over the key value paris
     #[must_use]
@@ -77,19 +77,19 @@ where
     type Element = MapE;
 
     #[inline]
-    fn get<Q: ?Sized>(&self, k: &Q) -> Option<&Self::Element>
+    fn get<Q>(&self, k: &Q) -> Option<&Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         Halfbrown::get(self, k)
     }
 
     #[inline]
-    fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut Self::Element>
+    fn get_mut<Q>(&mut self, k: &Q) -> Option<&mut Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         Halfbrown::get_mut(self, k)
     }
@@ -105,10 +105,10 @@ where
     }
 
     #[inline]
-    fn remove<Q: ?Sized>(&mut self, k: &Q) -> Option<Self::Element>
+    fn remove<Q>(&mut self, k: &Q) -> Option<Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         Halfbrown::remove(self, k)
     }
@@ -142,19 +142,19 @@ where
     type Element = MapE;
 
     #[inline]
-    fn get<Q: ?Sized>(&self, k: &Q) -> Option<&Self::Element>
+    fn get<Q>(&self, k: &Q) -> Option<&Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         HashMap::get(self, k)
     }
 
     #[inline]
-    fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut Self::Element>
+    fn get_mut<Q>(&mut self, k: &Q) -> Option<&mut Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         HashMap::get_mut(self, k)
     }
@@ -170,10 +170,10 @@ where
     }
 
     #[inline]
-    fn remove<Q: ?Sized>(&mut self, k: &Q) -> Option<Self::Element>
+    fn remove<Q>(&mut self, k: &Q) -> Option<Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         HashMap::remove(self, k)
     }
@@ -208,19 +208,19 @@ where
     type Element = MapE;
 
     #[inline]
-    fn get<Q: ?Sized>(&self, k: &Q) -> Option<&Self::Element>
+    fn get<Q>(&self, k: &Q) -> Option<&Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         Hashbrown::get(self, k)
     }
 
     #[inline]
-    fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut Self::Element>
+    fn get_mut<Q>(&mut self, k: &Q) -> Option<&mut Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         Hashbrown::get_mut(self, k)
     }
@@ -236,10 +236,10 @@ where
     }
 
     #[inline]
-    fn remove<Q: ?Sized>(&mut self, k: &Q) -> Option<Self::Element>
+    fn remove<Q>(&mut self, k: &Q) -> Option<Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         Hashbrown::remove(self, k)
     }
@@ -275,19 +275,19 @@ where
     type Element = MapE;
 
     #[inline]
-    fn get<Q: ?Sized>(&self, k: &Q) -> Option<&Self::Element>
+    fn get<Q>(&self, k: &Q) -> Option<&Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         abi_stable::std_types::RHashMap::get(self, k)
     }
 
     #[inline]
-    fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut Self::Element>
+    fn get_mut<Q>(&mut self, k: &Q) -> Option<&mut Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         abi_stable::std_types::RHashMap::get_mut(self, k)
     }
@@ -303,10 +303,10 @@ where
     }
 
     #[inline]
-    fn remove<Q: ?Sized>(&mut self, k: &Q) -> Option<Self::Element>
+    fn remove<Q>(&mut self, k: &Q) -> Option<Self::Element>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         abi_stable::std_types::RHashMap::remove(self, k).into()
     }
