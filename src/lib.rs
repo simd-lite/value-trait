@@ -1,16 +1,16 @@
 //! A crate providing generalised value traits for working with
 //! `JSONesque` values.
 #![warn(unused_extern_crates)]
+#![cfg_attr(feature = "portable", feature(portable_simd))]
 #![deny(
     clippy::all,
     clippy::unwrap_used,
     clippy::unnecessary_unwrap,
-    clippy::pedantic
+    clippy::pedantic,
+    missing_docs
 )]
 // We might want to revisit inline_always
-#![allow(clippy::module_name_repetitions, clippy::inline_always)]
-#![allow(clippy::type_repetition_in_bounds)]
-#![deny(missing_docs)]
+#![allow(clippy::module_name_repetitions)]
 
 #[cfg(all(feature = "128bit", feature = "c-abi"))]
 compile_error!(
@@ -577,13 +577,13 @@ pub trait ValueAccess: Sized {
     }
 
     /// Tries to represent the value as a f32
-    #[allow(clippy::cast_possible_truncation)]
     #[inline]
     #[must_use]
     fn as_f32(&self) -> Option<f32> {
         self.as_f64().and_then(|u| {
             if u <= f64::from(std::f32::MAX) && u >= f64::from(std::f32::MIN) {
                 // Since we check above
+                #[allow(clippy::cast_possible_truncation)]
                 Some(u as f32)
             } else {
                 None
@@ -669,10 +669,10 @@ pub trait ValueAccess: Sized {
     /// it was asked for.
     #[inline]
     #[must_use]
-    fn get<Q: ?Sized>(&self, k: &Q) -> Option<&Self::Target>
+    fn get<Q>(&self, k: &Q) -> Option<&Self::Target>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.as_object().and_then(|a| a.get(k))
     }
@@ -682,10 +682,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the value is not an object
     #[inline]
-    fn try_get<Q: ?Sized>(&self, k: &Q) -> Result<Option<&Self::Target>, TryTypeError>
+    fn try_get<Q>(&self, k: &Q) -> Result<Option<&Self::Target>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         Ok(self
             .as_object()
@@ -700,10 +700,10 @@ pub trait ValueAccess: Sized {
     /// flase if Value isn't an object  
     #[inline]
     #[must_use]
-    fn contains_key<Q: ?Sized>(&self, k: &Q) -> bool
+    fn contains_key<Q>(&self, k: &Q) -> bool
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.as_object().and_then(|a| a.get(k)).is_some()
     }
@@ -735,10 +735,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a bool
     #[inline]
     #[must_use]
-    fn get_bool<Q: ?Sized>(&self, k: &Q) -> Option<bool>
+    fn get_bool<Q>(&self, k: &Q) -> Option<bool>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_bool)
     }
@@ -748,10 +748,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_bool<Q: ?Sized>(&self, k: &Q) -> Result<Option<bool>, TryTypeError>
+    fn try_get_bool<Q>(&self, k: &Q) -> Result<Option<bool>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?.map(ValueAccess::try_as_bool).transpose()
     }
@@ -759,10 +759,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a i128
     #[inline]
     #[must_use]
-    fn get_i128<Q: ?Sized>(&self, k: &Q) -> Option<i128>
+    fn get_i128<Q>(&self, k: &Q) -> Option<i128>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_i128)
     }
@@ -772,10 +772,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_i128<Q: ?Sized>(&self, k: &Q) -> Result<Option<i128>, TryTypeError>
+    fn try_get_i128<Q>(&self, k: &Q) -> Result<Option<i128>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?.map(ValueAccess::try_as_i128).transpose()
     }
@@ -783,10 +783,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a i64
     #[inline]
     #[must_use]
-    fn get_i64<Q: ?Sized>(&self, k: &Q) -> Option<i64>
+    fn get_i64<Q>(&self, k: &Q) -> Option<i64>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_i64)
     }
@@ -796,10 +796,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_i64<Q: ?Sized>(&self, k: &Q) -> Result<Option<i64>, TryTypeError>
+    fn try_get_i64<Q>(&self, k: &Q) -> Result<Option<i64>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?.map(ValueAccess::try_as_i64).transpose()
     }
@@ -807,10 +807,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a i32
     #[inline]
     #[must_use]
-    fn get_i32<Q: ?Sized>(&self, k: &Q) -> Option<i32>
+    fn get_i32<Q>(&self, k: &Q) -> Option<i32>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_i32)
     }
@@ -820,10 +820,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_i32<Q: ?Sized>(&self, k: &Q) -> Result<Option<i32>, TryTypeError>
+    fn try_get_i32<Q>(&self, k: &Q) -> Result<Option<i32>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?.map(ValueAccess::try_as_i32).transpose()
     }
@@ -831,10 +831,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a i16
     #[inline]
     #[must_use]
-    fn get_i16<Q: ?Sized>(&self, k: &Q) -> Option<i16>
+    fn get_i16<Q>(&self, k: &Q) -> Option<i16>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_i16)
     }
@@ -843,10 +843,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_i16<Q: ?Sized>(&self, k: &Q) -> Result<Option<i16>, TryTypeError>
+    fn try_get_i16<Q>(&self, k: &Q) -> Result<Option<i16>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?.map(ValueAccess::try_as_i16).transpose()
     }
@@ -854,10 +854,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a i8
     #[inline]
     #[must_use]
-    fn get_i8<Q: ?Sized>(&self, k: &Q) -> Option<i8>
+    fn get_i8<Q>(&self, k: &Q) -> Option<i8>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_i8)
     }
@@ -867,10 +867,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_i8<Q: ?Sized>(&self, k: &Q) -> Result<Option<i8>, TryTypeError>
+    fn try_get_i8<Q>(&self, k: &Q) -> Result<Option<i8>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?.map(ValueAccess::try_as_i8).transpose()
     }
@@ -878,10 +878,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a u128
     #[inline]
     #[must_use]
-    fn get_u128<Q: ?Sized>(&self, k: &Q) -> Option<u128>
+    fn get_u128<Q>(&self, k: &Q) -> Option<u128>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_u128)
     }
@@ -891,10 +891,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_u128<Q: ?Sized>(&self, k: &Q) -> Result<Option<u128>, TryTypeError>
+    fn try_get_u128<Q>(&self, k: &Q) -> Result<Option<u128>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?.map(ValueAccess::try_as_u128).transpose()
     }
@@ -902,10 +902,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a u64
     #[inline]
     #[must_use]
-    fn get_u64<Q: ?Sized>(&self, k: &Q) -> Option<u64>
+    fn get_u64<Q>(&self, k: &Q) -> Option<u64>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_u64)
     }
@@ -915,10 +915,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_u64<Q: ?Sized>(&self, k: &Q) -> Result<Option<u64>, TryTypeError>
+    fn try_get_u64<Q>(&self, k: &Q) -> Result<Option<u64>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?.map(ValueAccess::try_as_u64).transpose()
     }
@@ -926,10 +926,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a usize
     #[inline]
     #[must_use]
-    fn get_usize<Q: ?Sized>(&self, k: &Q) -> Option<usize>
+    fn get_usize<Q>(&self, k: &Q) -> Option<usize>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_usize)
     }
@@ -939,10 +939,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_usize<Q: ?Sized>(&self, k: &Q) -> Result<Option<usize>, TryTypeError>
+    fn try_get_usize<Q>(&self, k: &Q) -> Result<Option<usize>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?.map(ValueAccess::try_as_usize).transpose()
     }
@@ -950,10 +950,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a u32
     #[inline]
     #[must_use]
-    fn get_u32<Q: ?Sized>(&self, k: &Q) -> Option<u32>
+    fn get_u32<Q>(&self, k: &Q) -> Option<u32>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_u32)
     }
@@ -963,10 +963,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_u32<Q: ?Sized>(&self, k: &Q) -> Result<Option<u32>, TryTypeError>
+    fn try_get_u32<Q>(&self, k: &Q) -> Result<Option<u32>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?.map(ValueAccess::try_as_u32).transpose()
     }
@@ -974,10 +974,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a u16
     #[inline]
     #[must_use]
-    fn get_u16<Q: ?Sized>(&self, k: &Q) -> Option<u16>
+    fn get_u16<Q>(&self, k: &Q) -> Option<u16>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_u16)
     }
@@ -987,10 +987,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_u16<Q: ?Sized>(&self, k: &Q) -> Result<Option<u16>, TryTypeError>
+    fn try_get_u16<Q>(&self, k: &Q) -> Result<Option<u16>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?.map(ValueAccess::try_as_u16).transpose()
     }
@@ -998,10 +998,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a u8
     #[inline]
     #[must_use]
-    fn get_u8<Q: ?Sized>(&self, k: &Q) -> Option<u8>
+    fn get_u8<Q>(&self, k: &Q) -> Option<u8>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_u8)
     }
@@ -1011,10 +1011,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_u8<Q: ?Sized>(&self, k: &Q) -> Result<Option<u8>, TryTypeError>
+    fn try_get_u8<Q>(&self, k: &Q) -> Result<Option<u8>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?.map(ValueAccess::try_as_u8).transpose()
     }
@@ -1022,10 +1022,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a f64
     #[inline]
     #[must_use]
-    fn get_f64<Q: ?Sized>(&self, k: &Q) -> Option<f64>
+    fn get_f64<Q>(&self, k: &Q) -> Option<f64>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_f64)
     }
@@ -1035,10 +1035,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_f64<Q: ?Sized>(&self, k: &Q) -> Result<Option<f64>, TryTypeError>
+    fn try_get_f64<Q>(&self, k: &Q) -> Result<Option<f64>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?.map(ValueAccess::try_as_f64).transpose()
     }
@@ -1046,10 +1046,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a f32
     #[inline]
     #[must_use]
-    fn get_f32<Q: ?Sized>(&self, k: &Q) -> Option<f32>
+    fn get_f32<Q>(&self, k: &Q) -> Option<f32>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_f32)
     }
@@ -1059,10 +1059,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_f32<Q: ?Sized>(&self, k: &Q) -> Result<Option<f32>, TryTypeError>
+    fn try_get_f32<Q>(&self, k: &Q) -> Result<Option<f32>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?.map(ValueAccess::try_as_f32).transpose()
     }
@@ -1070,10 +1070,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a str
     #[inline]
     #[must_use]
-    fn get_str<Q: ?Sized>(&self, k: &Q) -> Option<&str>
+    fn get_str<Q>(&self, k: &Q) -> Option<&str>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_str)
     }
@@ -1083,10 +1083,10 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_str<Q: ?Sized>(&self, k: &Q) -> Result<Option<&str>, TryTypeError>
+    fn try_get_str<Q>(&self, k: &Q) -> Result<Option<&str>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)
             .and_then(|s| s.map(ValueAccess::try_as_str).transpose())
@@ -1095,13 +1095,10 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a array
     #[inline]
     #[must_use]
-    fn get_array<Q: ?Sized>(
-        &self,
-        k: &Q,
-    ) -> Option<&<<Self as ValueAccess>::Target as ValueAccess>::Array>
+    fn get_array<Q>(&self, k: &Q) -> Option<&<<Self as ValueAccess>::Target as ValueAccess>::Array>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_array)
     }
@@ -1111,13 +1108,13 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_array<Q: ?Sized>(
+    fn try_get_array<Q>(
         &self,
         k: &Q,
     ) -> Result<Option<&<<Self as ValueAccess>::Target as ValueAccess>::Array>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)
             .and_then(|s| s.map(ValueAccess::try_as_array).transpose())
@@ -1126,13 +1123,13 @@ pub trait ValueAccess: Sized {
     /// Tries to get an element of an object as a object
     #[inline]
     #[must_use]
-    fn get_object<Q: ?Sized>(
+    fn get_object<Q>(
         &self,
         k: &Q,
     ) -> Option<&<<Self as ValueAccess>::Target as ValueAccess>::Object>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAccess::as_object)
     }
@@ -1143,13 +1140,13 @@ pub trait ValueAccess: Sized {
     /// # Errors
     /// if the requested type doesn't match the actual type or the value is not an object
     #[inline]
-    fn try_get_object<Q: ?Sized>(
+    fn try_get_object<Q>(
         &self,
         k: &Q,
     ) -> Result<Option<&<<Self as ValueAccess>::Target as ValueAccess>::Object>, TryTypeError>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)
             .and_then(|s| s.map(ValueAccess::try_as_object).transpose())
@@ -1384,10 +1381,10 @@ pub trait Mutable: IndexMut<usize> + Value + Sized {
     ///
     /// Will return `Err` if `self` is not an Object.
     #[inline]
-    fn remove<Q: ?Sized>(&mut self, k: &Q) -> std::result::Result<Option<Self::Target>, AccessError>
+    fn remove<Q>(&mut self, k: &Q) -> std::result::Result<Option<Self::Target>, AccessError>
     where
         <Self as ValueAccess>::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.as_object_mut()
             .ok_or(AccessError::NotAnObject)
@@ -1398,10 +1395,10 @@ pub trait Mutable: IndexMut<usize> + Value + Sized {
     /// If the `Value` isn't an object this opoeration will
     /// return `None` and have no effect.
     #[inline]
-    fn try_remove<Q: ?Sized>(&mut self, k: &Q) -> Option<Self::Target>
+    fn try_remove<Q>(&mut self, k: &Q) -> Option<Self::Target>
     where
         <Self as ValueAccess>::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.remove(k).ok().flatten()
     }
@@ -1457,10 +1454,10 @@ pub trait Mutable: IndexMut<usize> + Value + Sized {
 
     /// Same as `get` but returns a mutable ref instead
     //    fn get_amut(&mut self, k: &str) -> Option<&mut Self>;
-    fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut Self::Target>
+    fn get_mut<Q>(&mut self, k: &Q) -> Option<&mut Self::Target>
     where
         <Self as ValueAccess>::Key: Borrow<Q> + Hash + Eq,
-        Q: Hash + Eq + Ord,
+        Q: ?Sized + Hash + Eq + Ord,
     {
         self.as_object_mut().and_then(|m| m.get_mut(k))
     }

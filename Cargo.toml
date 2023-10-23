@@ -8,7 +8,7 @@ description = "Traits to deal with JSONesque values"
 repository = "https://github.com/simd-lite/value-trait"
 readme = "README.md"
 documentation = "https://docs.rs/value-trait"
-rust-version = "1.61"
+rust-version = "1.64"
 
 
 [dependencies]
@@ -20,7 +20,7 @@ hashbrown = { version = "0.14", optional = true }
 abi_stable = { version = "0.11.0", optional = true, default-features = false }
 
 [features]
-default = ["custom-types", "halfbrown"]
+default = ["custom-types", "halfbrown", "runtime-detection"]
 # Support for 128 bit integers
 128bit = []
 
@@ -30,5 +30,8 @@ custom-types = []
 # Support for abi-stable's `StableAbi` implementation
 c-abi = ["abi_stable"]
 
-# Allow fallback to non simd CPUs
-allow-non-simd = []
+# use runtime detection of the CPU features where possible instead of enforcing an instruction set
+runtime-detection = []
+
+# portable simd support (as of rust 1.73 nightly only)
+portable = []
