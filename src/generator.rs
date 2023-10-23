@@ -367,6 +367,7 @@ pub trait BaseGenerator {
     }
 }
 
+#[cfg(any(target_arch = "x86_64", target_arch = "x86"))]
 unsafe fn write_str_simd_fastest<W>(writer: &mut W, string: &mut &[u8]) -> io::Result<()>
 where
     W: Write,
@@ -505,6 +506,7 @@ where
     Ok(())
 }
 
+#[cfg(any(target_arch = "x86_64", target_arch = "x86"))]
 #[target_feature(enable = "avx2")]
 #[inline]
 /// Writes a string with simd-acceleration
@@ -572,6 +574,7 @@ where
     Ok(())
 }
 
+#[cfg(any(target_arch = "x86_64", target_arch = "x86"))]
 #[target_feature(enable = "sse4.2")]
 #[inline]
 /// Writes a string with simd-acceleration
