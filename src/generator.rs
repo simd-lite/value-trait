@@ -419,7 +419,7 @@ where
     }
 }
 #[inline]
-fn write_string_complex<W>(writer: &mut W, string: &[u8], mut start: usize) -> io::Result<()>
+fn write_string_container<W>(writer: &mut W, string: &[u8], mut start: usize) -> io::Result<()>
 where
     W: Write,
 {
@@ -448,7 +448,7 @@ where
     // Legacy code to handle the remainder of the code
     for (index, ch) in string.iter().enumerate() {
         if ESCAPED[*ch as usize] > 0 {
-            return write_string_complex(writer, string, index);
+            return write_string_container(writer, string, index);
         }
     }
     writer.write_all(string)
