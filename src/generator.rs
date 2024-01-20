@@ -221,7 +221,10 @@ pub trait BaseGenerator {
     }
 
     #[cfg(not(any(
-        feature = "runtime-detection",
+        all(
+            feature = "runtime-detection",
+            any(target_arch = "x86_64", target_arch = "x86")
+        ),
         feature = "portable",
         target_feature = "avx2",
         target_feature = "sse4.2",
