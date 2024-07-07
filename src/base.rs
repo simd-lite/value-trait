@@ -32,7 +32,7 @@ pub trait ValueAsScalar {
     #[inline]
     #[must_use]
     fn as_i128(&self) -> Option<i128> {
-        self.as_i64().and_then(|u| u.try_into().ok())
+        self.as_i64().map(Into::into)
     }
 
     /// Tries to represent the value as an i64
@@ -64,7 +64,7 @@ pub trait ValueAsScalar {
     #[inline]
     #[must_use]
     fn as_u128(&self) -> Option<u128> {
-        self.as_u64().and_then(|u| u.try_into().ok())
+        self.as_u64().map(Into::into)
     }
 
     /// Tries to represent the value as an u64
@@ -107,7 +107,7 @@ pub trait ValueAsScalar {
     #[must_use]
     fn as_f32(&self) -> Option<f32> {
         self.as_f64().and_then(|u| {
-            if u <= f64::from(std::f32::MAX) && u >= f64::from(std::f32::MIN) {
+            if u <= f64::from(f32::MAX) && u >= f64::from(f32::MIN) {
                 // Since we check above
                 #[allow(clippy::cast_possible_truncation)]
                 Some(u as f32)
