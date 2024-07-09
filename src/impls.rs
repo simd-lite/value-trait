@@ -254,7 +254,7 @@ where
     #[must_use]
     fn get<Q>(&self, k: &Q) -> Option<&Self::Target>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.as_object().and_then(|a| a.get(k))
@@ -264,7 +264,7 @@ where
     #[must_use]
     fn contains_key<Q>(&self, k: &Q) -> bool
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.as_object().and_then(|a| a.get(k)).is_some()
@@ -281,7 +281,7 @@ where
     #[inline]
     fn try_get<Q>(&self, k: &Q) -> Result<Option<&Self::Target>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         Ok(self.try_as_object()?.get(k))
@@ -326,7 +326,7 @@ where
     #[must_use]
     fn get_bool<Q>(&self, k: &Q) -> Option<bool>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_bool)
@@ -336,7 +336,7 @@ where
     #[must_use]
     fn get_i128<Q>(&self, k: &Q) -> Option<i128>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_i128)
@@ -346,7 +346,7 @@ where
     #[must_use]
     fn get_i64<Q>(&self, k: &Q) -> Option<i64>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_i64)
@@ -356,7 +356,7 @@ where
     #[must_use]
     fn get_i32<Q>(&self, k: &Q) -> Option<i32>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_i32)
@@ -366,7 +366,7 @@ where
     #[must_use]
     fn get_i16<Q>(&self, k: &Q) -> Option<i16>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_i16)
@@ -376,7 +376,7 @@ where
     #[must_use]
     fn get_i8<Q>(&self, k: &Q) -> Option<i8>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_i8)
@@ -386,7 +386,7 @@ where
     #[must_use]
     fn get_u128<Q>(&self, k: &Q) -> Option<u128>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_u128)
@@ -396,7 +396,7 @@ where
     #[must_use]
     fn get_u64<Q>(&self, k: &Q) -> Option<u64>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_u64)
@@ -406,7 +406,7 @@ where
     #[must_use]
     fn get_usize<Q>(&self, k: &Q) -> Option<usize>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_usize)
@@ -416,7 +416,7 @@ where
     #[must_use]
     fn get_u32<Q>(&self, k: &Q) -> Option<u32>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_u32)
@@ -426,7 +426,7 @@ where
     #[must_use]
     fn get_u16<Q>(&self, k: &Q) -> Option<u16>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_u16)
@@ -436,7 +436,7 @@ where
     #[must_use]
     fn get_u8<Q>(&self, k: &Q) -> Option<u8>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_u8)
@@ -446,7 +446,7 @@ where
     #[must_use]
     fn get_f64<Q>(&self, k: &Q) -> Option<f64>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_f64)
@@ -456,7 +456,7 @@ where
     #[must_use]
     fn get_f32<Q>(&self, k: &Q) -> Option<f32>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_f32)
@@ -466,7 +466,7 @@ where
     #[must_use]
     fn get_str<Q>(&self, k: &Q) -> Option<&str>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_str)
@@ -486,7 +486,7 @@ where
     #[must_use]
     fn get_array<Q>(&self, k: &Q) -> Option<&Self::Array>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsArray::as_array)
@@ -505,7 +505,7 @@ where
     #[must_use]
     fn get_object<Q>(&self, k: &Q) -> Option<&Self::Object>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsObject::as_object)
@@ -524,7 +524,7 @@ where
     #[inline]
     fn try_get_array<Q>(&self, k: &Q) -> Result<Option<&Self::Array>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)
@@ -543,7 +543,7 @@ where
     #[inline]
     fn try_get_object<Q>(&self, k: &Q) -> Result<Option<&Self::Object>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)
@@ -560,7 +560,7 @@ where
 
     fn try_get_bool<Q>(&self, k: &Q) -> Result<Option<bool>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -570,7 +570,7 @@ where
 
     fn try_get_i128<Q>(&self, k: &Q) -> Result<Option<i128>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -580,7 +580,7 @@ where
 
     fn try_get_i64<Q>(&self, k: &Q) -> Result<Option<i64>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -590,7 +590,7 @@ where
 
     fn try_get_i32<Q>(&self, k: &Q) -> Result<Option<i32>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -600,7 +600,7 @@ where
 
     fn try_get_i16<Q>(&self, k: &Q) -> Result<Option<i16>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -610,7 +610,7 @@ where
 
     fn try_get_i8<Q>(&self, k: &Q) -> Result<Option<i8>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -620,7 +620,7 @@ where
 
     fn try_get_u128<Q>(&self, k: &Q) -> Result<Option<u128>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -630,7 +630,7 @@ where
 
     fn try_get_u64<Q>(&self, k: &Q) -> Result<Option<u64>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -640,7 +640,7 @@ where
 
     fn try_get_usize<Q>(&self, k: &Q) -> Result<Option<usize>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -650,7 +650,7 @@ where
 
     fn try_get_u32<Q>(&self, k: &Q) -> Result<Option<u32>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -660,7 +660,7 @@ where
 
     fn try_get_u16<Q>(&self, k: &Q) -> Result<Option<u16>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -670,7 +670,7 @@ where
 
     fn try_get_u8<Q>(&self, k: &Q) -> Result<Option<u8>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -680,7 +680,7 @@ where
 
     fn try_get_f64<Q>(&self, k: &Q) -> Result<Option<f64>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -690,7 +690,7 @@ where
 
     fn try_get_f32<Q>(&self, k: &Q) -> Result<Option<f32>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -700,7 +700,7 @@ where
 
     fn try_get_str<Q>(&self, k: &Q) -> Result<Option<&str>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -883,7 +883,7 @@ where
     #[inline]
     fn remove<Q>(&mut self, k: &Q) -> std::result::Result<Option<Self::Target>, AccessError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.as_object_mut()
@@ -893,7 +893,7 @@ where
     #[inline]
     fn get_mut<Q>(&mut self, k: &Q) -> Option<&mut Self::Target>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.as_object_mut().and_then(|m| m.get_mut(k))
