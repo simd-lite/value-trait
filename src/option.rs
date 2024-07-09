@@ -1,5 +1,6 @@
 use crate::{
-    base::{TypedValue, ValueAsContainer, ValueAsScalar, ValueIntoContainer, ValueIntoString},
+    base::{TypedValue, ValueAsScalar, ValueIntoString},
+    prelude::{ValueAsArray, ValueAsObject, ValueIntoArray, ValueIntoObject},
     ExtendedValueType, ValueType,
 };
 
@@ -14,17 +15,22 @@ where
     }
 }
 
-impl<V> ValueIntoContainer for Option<V>
+impl<V> ValueIntoArray for Option<V>
 where
-    V: ValueIntoContainer,
+    V: ValueIntoArray,
 {
     type Array = V::Array;
-    type Object = V::Object;
     fn into_array(self) -> Option<Self::Array> {
-        self.and_then(ValueIntoContainer::into_array)
+        self.and_then(ValueIntoArray::into_array)
     }
+}
+impl<V> ValueIntoObject for Option<V>
+where
+    V: ValueIntoObject,
+{
+    type Object = V::Object;
     fn into_object(self) -> Option<Self::Object> {
-        self.and_then(ValueIntoContainer::into_object)
+        self.and_then(ValueIntoObject::into_object)
     }
 }
 
@@ -69,19 +75,24 @@ where
     }
 }
 
-impl<V> ValueAsContainer for Option<V>
+impl<V> ValueAsArray for Option<V>
 where
-    V: ValueAsContainer,
+    V: ValueAsArray,
 {
     type Array = V::Array;
-    type Object = V::Object;
 
     fn as_array(&self) -> Option<&Self::Array> {
-        self.as_ref().and_then(ValueAsContainer::as_array)
+        self.as_ref().and_then(ValueAsArray::as_array)
     }
+}
+impl<V> ValueAsObject for Option<V>
+where
+    V: ValueAsObject,
+{
+    type Object = V::Object;
 
     fn as_object(&self) -> Option<&Self::Object> {
-        self.as_ref().and_then(ValueAsContainer::as_object)
+        self.as_ref().and_then(ValueAsObject::as_object)
     }
 }
 
@@ -96,17 +107,22 @@ where
     }
 }
 
-impl<V, E> ValueIntoContainer for Result<V, E>
+impl<V, E> ValueIntoArray for Result<V, E>
 where
-    V: ValueIntoContainer,
+    V: ValueIntoArray,
 {
     type Array = V::Array;
-    type Object = V::Object;
     fn into_array(self) -> Option<Self::Array> {
-        self.ok().and_then(ValueIntoContainer::into_array)
+        self.ok().and_then(ValueIntoArray::into_array)
     }
+}
+impl<V, E> ValueIntoObject for Result<V, E>
+where
+    V: ValueIntoObject,
+{
+    type Object = V::Object;
     fn into_object(self) -> Option<Self::Object> {
-        self.ok().and_then(ValueIntoContainer::into_object)
+        self.ok().and_then(ValueIntoObject::into_object)
     }
 }
 
@@ -149,19 +165,24 @@ where
         self.as_ref().ok().and_then(ValueAsScalar::as_str)
     }
 }
-impl<V, E> ValueAsContainer for Result<V, E>
+impl<V, E> ValueAsArray for Result<V, E>
 where
-    V: ValueAsContainer,
+    V: ValueAsArray,
 {
     type Array = V::Array;
-    type Object = V::Object;
 
     fn as_array(&self) -> Option<&Self::Array> {
-        self.as_ref().ok().and_then(ValueAsContainer::as_array)
+        self.as_ref().ok().and_then(ValueAsArray::as_array)
     }
+}
+impl<V, E> ValueAsObject for Result<V, E>
+where
+    V: ValueAsObject,
+{
+    type Object = V::Object;
 
     fn as_object(&self) -> Option<&Self::Object> {
-        self.as_ref().ok().and_then(ValueAsContainer::as_object)
+        self.as_ref().ok().and_then(ValueAsObject::as_object)
     }
 }
 
@@ -202,16 +223,21 @@ where
     }
 }
 
-impl<V> ValueAsContainer for &V
+impl<V> ValueAsArray for &V
 where
-    V: ValueAsContainer,
+    V: ValueAsArray,
 {
     type Array = V::Array;
-    type Object = V::Object;
 
     fn as_array(&self) -> Option<&Self::Array> {
         (*self).as_array()
     }
+}
+impl<V> ValueAsObject for &V
+where
+    V: ValueAsObject,
+{
+    type Object = V::Object;
 
     fn as_object(&self) -> Option<&Self::Object> {
         (*self).as_object()

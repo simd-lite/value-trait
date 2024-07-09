@@ -175,28 +175,34 @@ pub trait TypedScalarValue {
     fn is_char(&self) -> bool;
 }
 
-/// Type checks for container values on a value
-pub trait TypedContainerValue {
+/// Type checks for array values on a value
+pub trait TypedArrayValue {
     /// returns true if the current value can be represented as an array
     #[must_use]
     fn is_array(&self) -> bool;
+}
 
+/// Type checks for object values on a value
+pub trait TypedObjectValue {
     /// returns true if the current value can be represented as an object
     #[must_use]
     fn is_object(&self) -> bool;
 }
 
-/// `try_as_*` access to container value types
-pub trait ValueTryAsContainer {
+/// `try_as_*` access to array value types
+pub trait ValueTryAsArray {
     /// The array structure
     type Array: Array;
-    /// The object structure
-    type Object: Object;
 
     /// Tries to represent the value as an array and returns a reference to it
     /// # Errors
     /// if the requested type doesn't match the actual type
     fn try_as_array(&self) -> Result<&Self::Array, TryTypeError>;
+}
+/// `try_as_*` access to object value types
+pub trait ValueTryAsObject {
+    /// The object structure
+    type Object: Object;
 
     /// Tries to represent the value as an object and returns a reference to it
     /// # Errors
@@ -472,22 +478,26 @@ pub trait ValueObjectAccessTryAsScalar {
         Q: ?Sized + Hash + Eq + Ord;
 }
 
-/// Access to container values in an object
-pub trait ValueObjectAccessAsContainer {
+/// Access to array values in an object
+pub trait ValueObjectAccessAsArray {
     /// The type for Objects
     type Key: ?Sized;
-    /// The target for nested lookups
-    type Target;
     /// The array structure
     type Array: Array;
-    /// The object structure
-    type Object: Object;
 
     /// Tries to get an element of an object as a array
     fn get_array<Q>(&self, k: &Q) -> Option<&Self::Array>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
         Q: ?Sized + Hash + Eq + Ord;
+}
+
+/// Access to object values in an object
+pub trait ValueObjectAccessAsObject {
+    /// The type for Objects
+    type Key: ?Sized;
+    /// The object structure
+    type Object: Object;
 
     /// Tries to get an element of an object as a object
     fn get_object<Q>(&self, k: &Q) -> Option<&Self::Object>
@@ -496,16 +506,12 @@ pub trait ValueObjectAccessAsContainer {
         Q: ?Sized + Hash + Eq + Ord;
 }
 
-/// `try_as_*` access to container values in an object
-pub trait ValueObjectAccessTryAsContainer {
+/// `try_get_array` access to object values in an object
+pub trait ValueObjectAccessTryAsArray {
     /// The type for Objects
     type Key: ?Sized;
-    /// The target for nested lookups
-    type Target;
     /// The array structure
     type Array: Array;
-    /// The object structure
-    type Object: Object;
 
     /// Tries to get an element of an object as an array, returns
     /// an error if it isn't a array
@@ -515,6 +521,13 @@ pub trait ValueObjectAccessTryAsContainer {
     where
         Self::Key: Borrow<Q> + Hash + Eq,
         Q: ?Sized + Hash + Eq + Ord;
+}
+/// `try_get_object` access to object values in an object
+pub trait ValueObjectAccessTryAsObject {
+    /// The type for Objects
+    type Key: ?Sized;
+    /// The object structure
+    type Object: Object;
 
     /// Tries to get an element of an object as an object, returns
     /// an error if it isn't an object
@@ -679,18 +692,20 @@ pub trait ValueTryIntoString {
 }
 
 /// A trait that specifies how to turn the Value `into` it's sub types with error handling
-pub trait ValueTryIntoContainer {
+pub trait ValueTryIntoArray {
     /// The type for Arrays
     type Array;
-
-    /// The type for Objects
-    type Object;
 
     /// Tries to turn the value into it's array representation
     /// # Errors
     /// if the requested type doesn't match the actual type
 
     fn try_into_array(self) -> Result<Self::Array, TryTypeError>;
+}
+/// A trait that specifies how to turn the Value `into` it's sub types with error handling
+pub trait ValueTryIntoObject {
+    /// The type for Objects
+    type Object;
 
     /// Tries to turn the value into it's object representation
     /// # Errors

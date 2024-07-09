@@ -145,28 +145,37 @@ pub trait ValueAsScalar {
 }
 
 /// Trait to allow accessing data inside a Value
-pub trait ValueAsContainer {
+pub trait ValueAsArray {
     /// The array structure
     type Array: Array;
-    /// The object structure
-    type Object: Object;
 
     /// Tries to represent the value as an array and returns a reference to it
     #[must_use]
     fn as_array(&self) -> Option<&Self::Array>;
+}
+
+/// Trait to allow Value as an object
+pub trait ValueAsObject {
+    /// The object structure
+    type Object: Object;
+
     /// Tries to represent the value as an object and returns a reference to it
     #[must_use]
     fn as_object(&self) -> Option<&Self::Object>;
 }
 
-/// Mutatability for container values
-pub trait ValueAsMutContainer {
+/// Mutatability for Array values
+pub trait ValueAsMutArray {
     /// The type for Arrays
     type Array;
-    /// The type for Objects
-    type Object;
     /// Tries to represent the value as an array and returns a mutable reference to it
     fn as_array_mut(&mut self) -> Option<&mut Self::Array>;
+}
+
+/// Mutatability for Object values
+pub trait ValueAsMutObject {
+    /// The type for Objects
+    type Object;
     /// Tries to represent the value as an object and returns a mutable reference to it
     fn as_object_mut(&mut self) -> Option<&mut Self::Object>;
 }
@@ -182,16 +191,18 @@ pub trait ValueIntoString {
 }
 
 /// A trait that specifies how to turn the Value `into` it's sub types
-pub trait ValueIntoContainer {
+pub trait ValueIntoArray {
     /// The type for Arrays
     type Array;
-
-    /// The type for Objects
-    type Object;
 
     /// Tries to turn the value into it's array representation
     #[must_use]
     fn into_array(self) -> Option<Self::Array>;
+}
+/// A trait that specifies how to turn the Value `into` it's sub types
+pub trait ValueIntoObject {
+    /// The type for Objects
+    type Object;
 
     /// Tries to turn the value into it's object representation
     #[must_use]

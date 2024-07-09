@@ -2,18 +2,20 @@ use std::{borrow::Borrow, hash::Hash};
 
 use crate::{
     array::{Array, ArrayMut},
-    base::{
-        TypedValue, ValueAsContainer, ValueAsMutContainer, ValueAsScalar, ValueIntoContainer,
-        ValueIntoString,
-    },
+    base::{TypedValue, ValueAsScalar, ValueIntoString},
     derived::{
-        MutableArray, MutableObject, TypedContainerValue, TypedScalarValue, ValueArrayAccess,
-        ValueArrayTryAccess, ValueObjectAccess, ValueObjectAccessAsContainer,
-        ValueObjectAccessAsScalar, ValueObjectAccessTryAsContainer, ValueObjectAccessTryAsScalar,
-        ValueObjectTryAccess, ValueTryAsContainer, ValueTryAsScalar, ValueTryIntoContainer,
+        MutableArray, MutableObject, TypedArrayValue, TypedObjectValue, TypedScalarValue,
+        ValueArrayAccess, ValueArrayTryAccess, ValueObjectAccess, ValueObjectAccessAsArray,
+        ValueObjectAccessAsObject, ValueObjectAccessAsScalar, ValueObjectAccessTryAsArray,
+        ValueObjectAccessTryAsObject, ValueObjectAccessTryAsScalar, ValueObjectTryAccess,
+        ValueTryAsArray, ValueTryAsObject, ValueTryAsScalar, ValueTryIntoArray, ValueTryIntoObject,
         ValueTryIntoString,
     },
     object::{Object, ObjectMut},
+    prelude::{
+        ValueAsArray, ValueAsMutArray, ValueAsMutObject, ValueAsObject, ValueIntoArray,
+        ValueIntoObject,
+    },
     AccessError, ExtendedValueType, TryTypeError, ValueType,
 };
 
@@ -33,12 +35,11 @@ where
     }
 }
 
-impl<T> ValueTryIntoContainer for T
+impl<T> ValueTryIntoArray for T
 where
-    T: ValueIntoContainer + TypedValue,
+    T: ValueIntoArray + TypedValue,
 {
     type Array = T::Array;
-    type Object = T::Object;
     /// Tries to turn the value into it's array representation
     /// # Errors
     /// if the requested type doesn't match the actual type
@@ -50,6 +51,12 @@ where
             got: vt,
         })
     }
+}
+impl<T> ValueTryIntoObject for T
+where
+    T: ValueIntoObject + TypedValue,
+{
+    type Object = T::Object;
 
     /// Tries to turn the value into it's object representation
     /// # Errors
@@ -209,12 +216,11 @@ where
     }
 }
 
-impl<T> ValueTryAsContainer for T
+impl<T> ValueTryAsArray for T
 where
-    T: ValueAsContainer + TypedValue,
+    T: ValueAsArray + TypedValue,
 {
     type Array = T::Array;
-    type Object = T::Object;
     #[inline]
     fn try_as_array(&self) -> Result<&Self::Array, TryTypeError> {
         self.as_array().ok_or(TryTypeError {
@@ -222,6 +228,12 @@ where
             got: self.value_type(),
         })
     }
+}
+impl<T> ValueTryAsObject for T
+where
+    T: ValueAsObject + TypedValue,
+{
+    type Object = T::Object;
 
     #[inline]
     fn try_as_object(&self) -> Result<&Self::Object, TryTypeError> {
@@ -234,7 +246,7 @@ where
 
 impl<T> ValueObjectAccess for T
 where
-    T: ValueAsContainer,
+    T: ValueAsObject,
 {
     type Key = <T::Object as Object>::Key;
     type Target = <T::Object as Object>::Element;
@@ -261,7 +273,7 @@ where
 
 impl<T> ValueObjectTryAccess for T
 where
-    T: ValueTryAsContainer,
+    T: ValueTryAsObject,
 {
     type Key = <T::Object as Object>::Key;
     type Target = <T::Object as Object>::Element;
@@ -278,7 +290,7 @@ where
 
 impl<T> ValueArrayAccess for T
 where
-    T: ValueAsContainer,
+    T: ValueAsArray,
 {
     type Target = <T::Array as Array>::Element;
     #[inline]
@@ -290,7 +302,7 @@ where
 
 impl<T> ValueArrayTryAccess for T
 where
-    T: ValueTryAsContainer,
+    T: ValueTryAsArray,
 {
     type Target = <T::Array as Array>::Element;
 
@@ -461,51 +473,54 @@ where
     }
 }
 
-impl<T> ValueObjectAccessAsContainer for T
+impl<T> ValueObjectAccessAsArray for T
 where
     T: ValueObjectAccess,
-    T::Target: ValueAsContainer,
+    T::Target: ValueAsArray,
 {
     type Key = T::Key;
-    type Target = T::Target;
 
-    type Array = <T::Target as ValueAsContainer>::Array;
-
-    type Object = <T::Target as ValueAsContainer>::Object;
+    type Array = <T::Target as ValueAsArray>::Array;
 
     #[inline]
     #[must_use]
-    fn get_array<Q>(&self, k: &Q) -> Option<&<Self::Target as ValueAsContainer>::Array>
+    fn get_array<Q>(&self, k: &Q) -> Option<&Self::Array>
     where
         Self::Key: Borrow<Q> + Hash + Eq,
         Q: ?Sized + Hash + Eq + Ord,
     {
-        self.get(k).and_then(ValueAsContainer::as_array)
-    }
-
-    #[inline]
-    #[must_use]
-    fn get_object<Q>(&self, k: &Q) -> Option<&<Self::Target as ValueAsContainer>::Object>
-    where
-        Self::Key: Borrow<Q> + Hash + Eq,
-        Q: ?Sized + Hash + Eq + Ord,
-    {
-        self.get(k).and_then(ValueAsContainer::as_object)
+        self.get(k).and_then(ValueAsArray::as_array)
     }
 }
 
-impl<T> ValueObjectAccessTryAsContainer for T
+impl<T> ValueObjectAccessAsObject for T
+where
+    T: ValueObjectAccess,
+    T::Target: ValueAsObject,
+{
+    type Key = T::Key;
+    type Object = <T::Target as ValueAsObject>::Object;
+
+    #[inline]
+    #[must_use]
+    fn get_object<Q>(&self, k: &Q) -> Option<&Self::Object>
+    where
+        Self::Key: Borrow<Q> + Hash + Eq,
+        Q: ?Sized + Hash + Eq + Ord,
+    {
+        self.get(k).and_then(ValueAsObject::as_object)
+    }
+}
+
+impl<T> ValueObjectAccessTryAsArray for T
 where
     T: ValueObjectTryAccess + TypedValue,
-    T::Target: ValueTryAsContainer,
+    T::Target: ValueTryAsArray,
 {
     type Key = T::Key;
 
-    type Target = T::Target;
+    type Array = <T::Target as ValueTryAsArray>::Array;
 
-    type Array = <T::Target as ValueTryAsContainer>::Array;
-
-    type Object = <T::Target as ValueTryAsContainer>::Object;
     #[inline]
     fn try_get_array<Q>(&self, k: &Q) -> Result<Option<&Self::Array>, TryTypeError>
     where
@@ -513,8 +528,17 @@ where
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)
-            .and_then(|s| s.map(ValueTryAsContainer::try_as_array).transpose())
+            .and_then(|s| s.map(ValueTryAsArray::try_as_array).transpose())
     }
+}
+impl<T> ValueObjectAccessTryAsObject for T
+where
+    T: ValueObjectTryAccess + TypedValue,
+    T::Target: ValueTryAsObject,
+{
+    type Key = T::Key;
+
+    type Object = <T::Target as ValueTryAsObject>::Object;
 
     #[inline]
     fn try_get_object<Q>(&self, k: &Q) -> Result<Option<&Self::Object>, TryTypeError>
@@ -523,7 +547,7 @@ where
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)
-            .and_then(|s| s.map(ValueTryAsContainer::try_as_object).transpose())
+            .and_then(|s| s.map(ValueTryAsObject::try_as_object).transpose())
     }
 }
 
@@ -816,26 +840,29 @@ where
     }
 }
 
-impl<T> TypedContainerValue for T
+impl<T> TypedArrayValue for T
 where
-    T: ValueAsContainer,
+    T: ValueAsArray,
 {
     #[inline]
     #[must_use]
     fn is_array(&self) -> bool {
         self.as_array().is_some()
     }
-
+}
+impl<T> TypedObjectValue for T
+where
+    T: ValueAsObject,
+{
     #[inline]
     #[must_use]
     fn is_object(&self) -> bool {
         self.as_object().is_some()
     }
 }
-
 impl<T> MutableObject for T
 where
-    T: ValueAsMutContainer,
+    T: ValueAsMutObject,
     T::Object: ObjectMut,
 {
     type Key = <T::Object as ObjectMut>::Key;
@@ -875,7 +902,7 @@ where
 
 impl<T> MutableArray for T
 where
-    T: ValueAsMutContainer,
+    T: ValueAsMutArray,
     T::Array: ArrayMut,
 {
     type Target = <T::Array as ArrayMut>::Element;
