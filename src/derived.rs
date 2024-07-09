@@ -234,14 +234,14 @@ pub trait ValueObjectAccess {
 }
 
 /// Access to a value as an array
-pub trait ValueArrayAccess {
+pub trait ValueArrayAccess<I> {
     /// The target for nested lookups
-    type Target;
+    type Target: ?Sized;
     /// Gets a ref to a value based on n index, returns `None` if the
     /// current Value isn't an Array or doesn't contain the index
     /// it was asked for.
     #[must_use]
-    fn get_idx(&self, i: usize) -> Option<&Self::Target>;
+    fn get_idx(&self, i: I) -> Option<&Self::Target>;
 }
 
 /// Access to scalar values in an object
@@ -665,16 +665,21 @@ pub trait MutableArray {
     fn try_pop(&mut self) -> Option<Self::Target> {
         self.pop().ok().flatten()
     }
+}
+/// Mutatability for array like values
+pub trait MutableValueArrayAccess<I> {
+    /// The type for Array Values
+    type Target: ?Sized;
 
     /// Same as `get_idx` but returns a mutable ref instead
-    fn get_idx_mut(&mut self, i: usize) -> Option<&mut Self::Target>;
+    fn get_idx_mut(&mut self, i: I) -> Option<&mut Self::Target>;
 }
 
 /// Access to a value as an array with error handling
 pub trait ValueArrayTryAccess {
     /// The target for nested lookups
 
-    type Target;
+    type Target: ?Sized;
     /// Tries to get a value based on n index, returns a type error if the
     /// current value isn't an Array, returns `None` if the index is out of bounds
     /// # Errors

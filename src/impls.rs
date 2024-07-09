@@ -1,15 +1,15 @@
 use std::{borrow::Borrow, hash::Hash};
 
 use crate::{
-    array::{Array, ArrayMut},
+    array::{ArrayMut, Indexed, IndexedMut},
     base::{TypedValue, ValueAsScalar, ValueIntoString},
     derived::{
-        MutableArray, MutableObject, TypedArrayValue, TypedObjectValue, TypedScalarValue,
-        ValueArrayAccess, ValueArrayTryAccess, ValueObjectAccess, ValueObjectAccessAsArray,
-        ValueObjectAccessAsObject, ValueObjectAccessAsScalar, ValueObjectAccessTryAsArray,
-        ValueObjectAccessTryAsObject, ValueObjectAccessTryAsScalar, ValueObjectTryAccess,
-        ValueTryAsArray, ValueTryAsObject, ValueTryAsScalar, ValueTryIntoArray, ValueTryIntoObject,
-        ValueTryIntoString,
+        MutableArray, MutableObject, MutableValueArrayAccess, TypedArrayValue, TypedObjectValue,
+        TypedScalarValue, ValueArrayAccess, ValueArrayTryAccess, ValueObjectAccess,
+        ValueObjectAccessAsArray, ValueObjectAccessAsObject, ValueObjectAccessAsScalar,
+        ValueObjectAccessTryAsArray, ValueObjectAccessTryAsObject, ValueObjectAccessTryAsScalar,
+        ValueObjectTryAccess, ValueTryAsArray, ValueTryAsObject, ValueTryAsScalar,
+        ValueTryIntoArray, ValueTryIntoObject, ValueTryIntoString,
     },
     object::{Object, ObjectMut},
     prelude::{
@@ -288,14 +288,15 @@ where
     }
 }
 
-impl<T> ValueArrayAccess for T
+impl<I, T> ValueArrayAccess<I> for T
 where
     T: ValueAsArray,
+    <T as ValueAsArray>::Array: Indexed<I>,
 {
-    type Target = <T::Array as Array>::Element;
+    type Target = <<T as ValueAsArray>::Array as Indexed<I>>::Element;
     #[inline]
     #[must_use]
-    fn get_idx(&self, i: usize) -> Option<&Self::Target> {
+    fn get_idx(&self, i: I) -> Option<&Self::Target> {
         self.as_array().and_then(|a| a.get(i))
     }
 }
@@ -303,8 +304,9 @@ where
 impl<T> ValueArrayTryAccess for T
 where
     T: ValueTryAsArray,
+    <T as ValueTryAsArray>::Array: Indexed<usize>,
 {
-    type Target = <T::Array as Array>::Element;
+    type Target = <<T as ValueTryAsArray>::Array as Indexed<usize>>::Element;
 
     /// Tries to get a value based on n index, returns a type error if the
     /// current value isn't an Array, returns `None` if the index is out of bounds
@@ -930,10 +932,18 @@ where
             .ok_or(AccessError::NotAnArray)
             .map(ArrayMut::pop)
     }
+}
+
+impl<T, I> MutableValueArrayAccess<I> for T
+where
+    T: ValueAsMutArray,
+    T::Array: IndexedMut<I>,
+{
+    type Target = <T::Array as IndexedMut<I>>::Element;
 
     /// Same as `get_idx` but returns a mutable ref instead
     #[inline]
-    fn get_idx_mut(&mut self, i: usize) -> Option<&mut Self::Target> {
+    fn get_idx_mut(&mut self, i: I) -> Option<&mut Self::Target> {
         self.as_array_mut().and_then(|a| a.get_mut(i))
     }
 }
