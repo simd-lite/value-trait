@@ -1,19 +1,21 @@
 use std::{borrow::Borrow, hash::Hash};
 
 use crate::{
-    array::{Array, ArrayMut},
-    base::{
-        TypedValue, ValueAsContainer, ValueAsMutContainer, ValueAsScalar, ValueIntoContainer,
-        ValueIntoString,
-    },
+    array::{ArrayMut, Indexed, IndexedMut},
+    base::{TypedValue, ValueAsScalar, ValueIntoString},
     derived::{
-        MutableArray, MutableObject, TypedContainerValue, TypedScalarValue, ValueArrayAccess,
-        ValueArrayTryAccess, ValueObjectAccess, ValueObjectAccessAsContainer,
-        ValueObjectAccessAsScalar, ValueObjectAccessTryAsContainer, ValueObjectAccessTryAsScalar,
-        ValueObjectTryAccess, ValueTryAsContainer, ValueTryAsScalar, ValueTryIntoContainer,
-        ValueTryIntoString,
+        MutableArray, MutableObject, MutableValueArrayAccess, TypedArrayValue, TypedObjectValue,
+        TypedScalarValue, ValueArrayAccess, ValueArrayTryAccess, ValueObjectAccess,
+        ValueObjectAccessAsArray, ValueObjectAccessAsObject, ValueObjectAccessAsScalar,
+        ValueObjectAccessTryAsArray, ValueObjectAccessTryAsObject, ValueObjectAccessTryAsScalar,
+        ValueObjectTryAccess, ValueTryAsArray, ValueTryAsObject, ValueTryAsScalar,
+        ValueTryIntoArray, ValueTryIntoObject, ValueTryIntoString,
     },
     object::{Object, ObjectMut},
+    prelude::{
+        ValueAsArray, ValueAsMutArray, ValueAsMutObject, ValueAsObject, ValueIntoArray,
+        ValueIntoObject,
+    },
     AccessError, ExtendedValueType, TryTypeError, ValueType,
 };
 
@@ -33,12 +35,11 @@ where
     }
 }
 
-impl<T> ValueTryIntoContainer for T
+impl<T> ValueTryIntoArray for T
 where
-    T: ValueIntoContainer + TypedValue,
+    T: ValueIntoArray + TypedValue,
 {
     type Array = T::Array;
-    type Object = T::Object;
     /// Tries to turn the value into it's array representation
     /// # Errors
     /// if the requested type doesn't match the actual type
@@ -50,6 +51,12 @@ where
             got: vt,
         })
     }
+}
+impl<T> ValueTryIntoObject for T
+where
+    T: ValueIntoObject + TypedValue,
+{
+    type Object = T::Object;
 
     /// Tries to turn the value into it's object representation
     /// # Errors
@@ -209,12 +216,11 @@ where
     }
 }
 
-impl<T> ValueTryAsContainer for T
+impl<T> ValueTryAsArray for T
 where
-    T: ValueAsContainer + TypedValue,
+    T: ValueAsArray + TypedValue,
 {
     type Array = T::Array;
-    type Object = T::Object;
     #[inline]
     fn try_as_array(&self) -> Result<&Self::Array, TryTypeError> {
         self.as_array().ok_or(TryTypeError {
@@ -222,6 +228,12 @@ where
             got: self.value_type(),
         })
     }
+}
+impl<T> ValueTryAsObject for T
+where
+    T: ValueAsObject + TypedValue,
+{
+    type Object = T::Object;
 
     #[inline]
     fn try_as_object(&self) -> Result<&Self::Object, TryTypeError> {
@@ -234,7 +246,7 @@ where
 
 impl<T> ValueObjectAccess for T
 where
-    T: ValueAsContainer,
+    T: ValueAsObject,
 {
     type Key = <T::Object as Object>::Key;
     type Target = <T::Object as Object>::Element;
@@ -242,7 +254,7 @@ where
     #[must_use]
     fn get<Q>(&self, k: &Q) -> Option<&Self::Target>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.as_object().and_then(|a| a.get(k))
@@ -252,7 +264,7 @@ where
     #[must_use]
     fn contains_key<Q>(&self, k: &Q) -> bool
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.as_object().and_then(|a| a.get(k)).is_some()
@@ -261,7 +273,7 @@ where
 
 impl<T> ValueObjectTryAccess for T
 where
-    T: ValueTryAsContainer,
+    T: ValueTryAsObject,
 {
     type Key = <T::Object as Object>::Key;
     type Target = <T::Object as Object>::Element;
@@ -269,30 +281,32 @@ where
     #[inline]
     fn try_get<Q>(&self, k: &Q) -> Result<Option<&Self::Target>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         Ok(self.try_as_object()?.get(k))
     }
 }
 
-impl<T> ValueArrayAccess for T
+impl<I, T> ValueArrayAccess<I> for T
 where
-    T: ValueAsContainer,
+    T: ValueAsArray,
+    <T as ValueAsArray>::Array: Indexed<I>,
 {
-    type Target = <T::Array as Array>::Element;
+    type Target = <<T as ValueAsArray>::Array as Indexed<I>>::Element;
     #[inline]
     #[must_use]
-    fn get_idx(&self, i: usize) -> Option<&Self::Target> {
+    fn get_idx(&self, i: I) -> Option<&Self::Target> {
         self.as_array().and_then(|a| a.get(i))
     }
 }
 
 impl<T> ValueArrayTryAccess for T
 where
-    T: ValueTryAsContainer,
+    T: ValueTryAsArray,
+    <T as ValueTryAsArray>::Array: Indexed<usize>,
 {
-    type Target = <T::Array as Array>::Element;
+    type Target = <<T as ValueTryAsArray>::Array as Indexed<usize>>::Element;
 
     /// Tries to get a value based on n index, returns a type error if the
     /// current value isn't an Array, returns `None` if the index is out of bounds
@@ -314,7 +328,7 @@ where
     #[must_use]
     fn get_bool<Q>(&self, k: &Q) -> Option<bool>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_bool)
@@ -324,7 +338,7 @@ where
     #[must_use]
     fn get_i128<Q>(&self, k: &Q) -> Option<i128>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_i128)
@@ -334,7 +348,7 @@ where
     #[must_use]
     fn get_i64<Q>(&self, k: &Q) -> Option<i64>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_i64)
@@ -344,7 +358,7 @@ where
     #[must_use]
     fn get_i32<Q>(&self, k: &Q) -> Option<i32>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_i32)
@@ -354,7 +368,7 @@ where
     #[must_use]
     fn get_i16<Q>(&self, k: &Q) -> Option<i16>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_i16)
@@ -364,7 +378,7 @@ where
     #[must_use]
     fn get_i8<Q>(&self, k: &Q) -> Option<i8>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_i8)
@@ -374,7 +388,7 @@ where
     #[must_use]
     fn get_u128<Q>(&self, k: &Q) -> Option<u128>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_u128)
@@ -384,7 +398,7 @@ where
     #[must_use]
     fn get_u64<Q>(&self, k: &Q) -> Option<u64>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_u64)
@@ -394,7 +408,7 @@ where
     #[must_use]
     fn get_usize<Q>(&self, k: &Q) -> Option<usize>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_usize)
@@ -404,7 +418,7 @@ where
     #[must_use]
     fn get_u32<Q>(&self, k: &Q) -> Option<u32>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_u32)
@@ -414,7 +428,7 @@ where
     #[must_use]
     fn get_u16<Q>(&self, k: &Q) -> Option<u16>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_u16)
@@ -424,7 +438,7 @@ where
     #[must_use]
     fn get_u8<Q>(&self, k: &Q) -> Option<u8>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_u8)
@@ -434,7 +448,7 @@ where
     #[must_use]
     fn get_f64<Q>(&self, k: &Q) -> Option<f64>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_f64)
@@ -444,7 +458,7 @@ where
     #[must_use]
     fn get_f32<Q>(&self, k: &Q) -> Option<f32>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_f32)
@@ -454,76 +468,88 @@ where
     #[must_use]
     fn get_str<Q>(&self, k: &Q) -> Option<&str>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.get(k).and_then(ValueAsScalar::as_str)
     }
 }
 
-impl<T> ValueObjectAccessAsContainer for T
+impl<T> ValueObjectAccessAsArray for T
 where
     T: ValueObjectAccess,
-    T::Target: ValueAsContainer,
+    T::Target: ValueAsArray,
 {
     type Key = T::Key;
-    type Target = T::Target;
 
-    type Array = <T::Target as ValueAsContainer>::Array;
-
-    type Object = <T::Target as ValueAsContainer>::Object;
+    type Array = <T::Target as ValueAsArray>::Array;
 
     #[inline]
     #[must_use]
-    fn get_array<Q>(&self, k: &Q) -> Option<&<Self::Target as ValueAsContainer>::Array>
+    fn get_array<Q>(&self, k: &Q) -> Option<&Self::Array>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
-        self.get(k).and_then(ValueAsContainer::as_array)
-    }
-
-    #[inline]
-    #[must_use]
-    fn get_object<Q>(&self, k: &Q) -> Option<&<Self::Target as ValueAsContainer>::Object>
-    where
-        Self::Key: Borrow<Q> + Hash + Eq,
-        Q: ?Sized + Hash + Eq + Ord,
-    {
-        self.get(k).and_then(ValueAsContainer::as_object)
+        self.get(k).and_then(ValueAsArray::as_array)
     }
 }
 
-impl<T> ValueObjectAccessTryAsContainer for T
+impl<T> ValueObjectAccessAsObject for T
+where
+    T: ValueObjectAccess,
+    T::Target: ValueAsObject,
+{
+    type Key = T::Key;
+    type Object = <T::Target as ValueAsObject>::Object;
+
+    #[inline]
+    #[must_use]
+    fn get_object<Q>(&self, k: &Q) -> Option<&Self::Object>
+    where
+        Self::Key: Borrow<Q>,
+        Q: ?Sized + Hash + Eq + Ord,
+    {
+        self.get(k).and_then(ValueAsObject::as_object)
+    }
+}
+
+impl<T> ValueObjectAccessTryAsArray for T
 where
     T: ValueObjectTryAccess + TypedValue,
-    T::Target: ValueTryAsContainer,
+    T::Target: ValueTryAsArray,
 {
     type Key = T::Key;
 
-    type Target = T::Target;
+    type Array = <T::Target as ValueTryAsArray>::Array;
 
-    type Array = <T::Target as ValueTryAsContainer>::Array;
-
-    type Object = <T::Target as ValueTryAsContainer>::Object;
     #[inline]
     fn try_get_array<Q>(&self, k: &Q) -> Result<Option<&Self::Array>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)
-            .and_then(|s| s.map(ValueTryAsContainer::try_as_array).transpose())
+            .and_then(|s| s.map(ValueTryAsArray::try_as_array).transpose())
     }
+}
+impl<T> ValueObjectAccessTryAsObject for T
+where
+    T: ValueObjectTryAccess + TypedValue,
+    T::Target: ValueTryAsObject,
+{
+    type Key = T::Key;
+
+    type Object = <T::Target as ValueTryAsObject>::Object;
 
     #[inline]
     fn try_get_object<Q>(&self, k: &Q) -> Result<Option<&Self::Object>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)
-            .and_then(|s| s.map(ValueTryAsContainer::try_as_object).transpose())
+            .and_then(|s| s.map(ValueTryAsObject::try_as_object).transpose())
     }
 }
 
@@ -536,7 +562,7 @@ where
 
     fn try_get_bool<Q>(&self, k: &Q) -> Result<Option<bool>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -546,7 +572,7 @@ where
 
     fn try_get_i128<Q>(&self, k: &Q) -> Result<Option<i128>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -556,7 +582,7 @@ where
 
     fn try_get_i64<Q>(&self, k: &Q) -> Result<Option<i64>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -566,7 +592,7 @@ where
 
     fn try_get_i32<Q>(&self, k: &Q) -> Result<Option<i32>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -576,7 +602,7 @@ where
 
     fn try_get_i16<Q>(&self, k: &Q) -> Result<Option<i16>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -586,7 +612,7 @@ where
 
     fn try_get_i8<Q>(&self, k: &Q) -> Result<Option<i8>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -596,7 +622,7 @@ where
 
     fn try_get_u128<Q>(&self, k: &Q) -> Result<Option<u128>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -606,7 +632,7 @@ where
 
     fn try_get_u64<Q>(&self, k: &Q) -> Result<Option<u64>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -616,7 +642,7 @@ where
 
     fn try_get_usize<Q>(&self, k: &Q) -> Result<Option<usize>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -626,7 +652,7 @@ where
 
     fn try_get_u32<Q>(&self, k: &Q) -> Result<Option<u32>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -636,7 +662,7 @@ where
 
     fn try_get_u16<Q>(&self, k: &Q) -> Result<Option<u16>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -646,7 +672,7 @@ where
 
     fn try_get_u8<Q>(&self, k: &Q) -> Result<Option<u8>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -656,7 +682,7 @@ where
 
     fn try_get_f64<Q>(&self, k: &Q) -> Result<Option<f64>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -666,7 +692,7 @@ where
 
     fn try_get_f32<Q>(&self, k: &Q) -> Result<Option<f32>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -676,7 +702,7 @@ where
 
     fn try_get_str<Q>(&self, k: &Q) -> Result<Option<&str>, TryTypeError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.try_get(k)?
@@ -816,26 +842,29 @@ where
     }
 }
 
-impl<T> TypedContainerValue for T
+impl<T> TypedArrayValue for T
 where
-    T: ValueAsContainer,
+    T: ValueAsArray,
 {
     #[inline]
     #[must_use]
     fn is_array(&self) -> bool {
         self.as_array().is_some()
     }
-
+}
+impl<T> TypedObjectValue for T
+where
+    T: ValueAsObject,
+{
     #[inline]
     #[must_use]
     fn is_object(&self) -> bool {
         self.as_object().is_some()
     }
 }
-
 impl<T> MutableObject for T
 where
-    T: ValueAsMutContainer,
+    T: ValueAsMutObject,
     T::Object: ObjectMut,
 {
     type Key = <T::Object as ObjectMut>::Key;
@@ -856,7 +885,7 @@ where
     #[inline]
     fn remove<Q>(&mut self, k: &Q) -> std::result::Result<Option<Self::Target>, AccessError>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.as_object_mut()
@@ -866,7 +895,7 @@ where
     #[inline]
     fn get_mut<Q>(&mut self, k: &Q) -> Option<&mut Self::Target>
     where
-        Self::Key: Borrow<Q> + Hash + Eq,
+        Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
     {
         self.as_object_mut().and_then(|m| m.get_mut(k))
@@ -875,7 +904,7 @@ where
 
 impl<T> MutableArray for T
 where
-    T: ValueAsMutContainer,
+    T: ValueAsMutArray,
     T::Array: ArrayMut,
 {
     type Target = <T::Array as ArrayMut>::Element;
@@ -903,10 +932,18 @@ where
             .ok_or(AccessError::NotAnArray)
             .map(ArrayMut::pop)
     }
+}
+
+impl<T, I> MutableValueArrayAccess<I> for T
+where
+    T: ValueAsMutArray,
+    T::Array: IndexedMut<I>,
+{
+    type Target = <T::Array as IndexedMut<I>>::Element;
 
     /// Same as `get_idx` but returns a mutable ref instead
     #[inline]
-    fn get_idx_mut(&mut self, i: usize) -> Option<&mut Self::Target> {
+    fn get_idx_mut(&mut self, i: I) -> Option<&mut Self::Target> {
         self.as_array_mut().and_then(|a| a.get_mut(i))
     }
 }
