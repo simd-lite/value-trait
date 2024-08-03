@@ -57,7 +57,6 @@ pub enum AccessError {
     NotAnArray,
 }
 
-#[cfg(not(tarpaulin_include))]
 impl fmt::Display for AccessError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

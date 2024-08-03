@@ -105,42 +105,57 @@ impl<T> ArrayMut for Vec<T> {
 }
 
 #[cfg(feature = "c-abi")]
-impl<T> Array for abi_stable::std_types::RVec<T> {
-    type Element = T;
+mod cabi {
+    use super::{Array, ArrayMut, Indexed, IndexedMut, SliceIndex};
+    use abi_stable::std_types::RVec;
 
-    #[inline]
-    fn get<I>(&self, i: I) -> Option<&<I as SliceIndex<[T]>>::Output>
+    impl<T, I> Indexed<I> for RVec<T>
     where
         I: SliceIndex<[T]>,
     {
-        <[T]>::get(self, i)
+        type Element = <I as SliceIndex<[T]>>::Output;
+        #[inline]
+        fn get(&self, i: I) -> Option<&Self::Element> {
+            <[T]>::get(self, i)
+        }
     }
 
-    fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = &T> + 'i> {
-        Box::new(<[T]>::iter(self))
+    impl<T> Array for RVec<T> {
+        type Element = T;
+
+        fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = &T> + 'i> {
+            Box::new(<[T]>::iter(self))
+        }
+
+        #[inline]
+        fn len(&self) -> usize {
+            self.len()
+        }
     }
 
-    #[inline]
-    fn len(&self) -> usize {
-        self.len()
-    }
-}
-#[cfg(feature = "c-abi")]
-impl<T> ArrayMut for abi_stable::std_types::RVec<T> {
-    type Element = T;
-
-    #[inline]
-    fn get_mut(&mut self, i: usize) -> Option<&mut T> {
-        <[T]>::get_mut(self, i)
+    impl<T, I> IndexedMut<I> for RVec<T>
+    where
+        I: SliceIndex<[T]>,
+    {
+        type Element = <I as SliceIndex<[T]>>::Output;
+        #[inline]
+        fn get_mut(&mut self, i: I) -> Option<&mut Self::Element> {
+            <[T]>::get_mut(self, i)
+        }
     }
 
-    #[inline]
-    fn pop(&mut self) -> Option<T> {
-        abi_stable::std_types::RVec::pop(self)
-    }
+    #[cfg(feature = "c-abi")]
+    impl<T> ArrayMut for RVec<T> {
+        type Element = T;
 
-    #[inline]
-    fn push(&mut self, e: T) {
-        abi_stable::std_types::RVec::push(self, e);
+        #[inline]
+        fn pop(&mut self) -> Option<T> {
+            abi_stable::std_types::RVec::pop(self)
+        }
+
+        #[inline]
+        fn push(&mut self, e: T) {
+            abi_stable::std_types::RVec::push(self, e);
+        }
     }
 }

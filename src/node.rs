@@ -230,7 +230,6 @@ impl ValueAsScalar for StaticNode {
     }
 }
 
-#[cfg(not(tarpaulin_include))]
 impl fmt::Display for StaticNode {
     #[cfg(not(feature = "128bit"))]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
