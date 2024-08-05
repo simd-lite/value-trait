@@ -18,6 +18,7 @@ halfbrown = { version = "0.2", optional = true }
 float-cmp = "0.9"
 hashbrown = { version = "0.14", optional = true }
 abi_stable = { version = "0.11.0", optional = true, default-features = false }
+serde = { version = "1", features = ["derive"], optional = true }
 
 [features]
 default = ["custom-types", "halfbrown", "runtime-detection"]
@@ -35,3 +36,10 @@ runtime-detection = []
 
 # portable simd support (as of rust 1.73 nightly only)
 portable = []
+
+# include serde Serialize/Deserialize implementation for public enums
+serde = [ "dep:serde" ]
+
+[dev-dependencies]
+value-trait = { path = ".", features = ["serde", "runtime-detection", "custom-types", "128bit"] }
+serde_test = { version = "1" }

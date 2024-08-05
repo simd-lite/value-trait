@@ -69,6 +69,7 @@ impl std::error::Error for AccessError {}
 
 /// Extended types that have no native representation in JSON
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExtendedValueType {
     /// A 32 bit signed integer value
     I32,
@@ -117,6 +118,7 @@ impl fmt::Display for ExtendedValueType {
 
 /// Types of JSON values
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ValueType {
     /// null
     Null,
