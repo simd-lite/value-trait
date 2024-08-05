@@ -33,5 +33,5 @@ c-abi = ["abi_stable"]
 # use runtime detection of the CPU features where possible instead of enforcing an instruction set
 runtime-detection = []
 
-# portable simd support (as of rust 1.73 nightly only)
+# portable simd support (as of rust 1.80 nightly only)
 portable = []
