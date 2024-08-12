@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-use crate::{array::Array, object::Object, ValueType};
+use crate::{array::Array, object::Object, TryTypeError, ValueType};
 
 /// Type information on a value
 pub trait TypedValue {
@@ -172,12 +172,32 @@ pub trait ValueAsMutArray {
     fn as_array_mut(&mut self) -> Option<&mut Self::Array>;
 }
 
+/// `try_as_array_mut` access to array value types
+pub trait ValueTryAsArrayMut {
+    /// The array structure
+    type Array: Array;
+
+    /// Tries to represent the value as an array and returns a mutable reference to it
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    fn try_as_array_mut(&mut self) -> Result<&mut Self::Array, TryTypeError>;
+}
+
 /// Mutatability for Object values
 pub trait ValueAsMutObject {
     /// The type for Objects
     type Object;
     /// Tries to represent the value as an object and returns a mutable reference to it
     fn as_object_mut(&mut self) -> Option<&mut Self::Object>;
+}
+/// Mutatability for Object values
+pub trait ValueTryAsMutObject {
+    /// The type for Objects
+    type Object;
+    /// Tries to represent the value as an object and returns a mutable reference to it
+    /// # Errors
+    /// if the requested type doesn't match the actual type
+    fn try_as_object_mut(&mut self) -> Result<&mut Self::Object, TryTypeError>;
 }
 
 /// A trait that specifies how to turn the Value `into` it's sub types

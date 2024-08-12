@@ -1,8 +1,8 @@
 use std::{borrow::Borrow, hash::Hash};
 
 use crate::{
-    array::{ArrayMut, Indexed, IndexedMut},
-    base::{TypedValue, ValueAsScalar, ValueIntoString},
+    array::{self, ArrayMut, Indexed, IndexedMut},
+    base::{TypedValue, ValueAsScalar, ValueIntoString, ValueTryAsArrayMut, ValueTryAsMutObject},
     derived::{
         MutableArray, MutableObject, MutableValueArrayAccess, TypedArrayValue, TypedObjectValue,
         TypedScalarValue, ValueArrayAccess, ValueArrayTryAccess, ValueObjectAccess,
@@ -229,6 +229,22 @@ where
         })
     }
 }
+impl<T> ValueTryAsArrayMut for T
+where
+    T: ValueAsMutArray + TypedValue,
+    <T as ValueAsMutArray>::Array: array::Array,
+{
+    type Array = T::Array;
+    #[inline]
+    fn try_as_array_mut(&mut self) -> Result<&mut Self::Array, TryTypeError> {
+        let got = self.value_type();
+        self.as_array_mut().ok_or(TryTypeError {
+            expected: ValueType::Array,
+            got,
+        })
+    }
+}
+
 impl<T> ValueTryAsObject for T
 where
     T: ValueAsObject + TypedValue,
@@ -240,6 +256,21 @@ where
         self.as_object().ok_or(TryTypeError {
             expected: ValueType::Object,
             got: self.value_type(),
+        })
+    }
+}
+impl<T> ValueTryAsMutObject for T
+where
+    T: ValueAsMutObject + TypedValue,
+{
+    type Object = T::Object;
+
+    #[inline]
+    fn try_as_object_mut(&mut self) -> Result<&mut Self::Object, TryTypeError> {
+        let got = self.value_type();
+        self.as_object_mut().ok_or(TryTypeError {
+            expected: ValueType::Object,
+            got,
         })
     }
 }
