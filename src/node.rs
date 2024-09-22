@@ -12,6 +12,7 @@ mod from;
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "c-abi", repr(C))]
 #[cfg_attr(feature = "c-abi", derive(abi_stable::StableAbi))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum StaticNode {
     /// A signed 64 bit integer.
     I64(i64),
@@ -310,5 +311,60 @@ impl Default for StaticNode {
     #[must_use]
     fn default() -> Self {
         Self::Null
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_test::{assert_tokens, Token};
+    #[test]
+    fn static_node_serde() {
+        let test_i64 = StaticNode::I64(-5);
+        let test_u64 = StaticNode::U64(5);
+        let test_f64 = StaticNode::F64(5.4);
+        let test_bool = StaticNode::Bool(true);
+        let test_null = StaticNode::Null;
+
+        assert_tokens(
+            &test_i64,
+            &[
+                Token::Enum { name: "StaticNode" },
+                Token::Str("I64"),
+                Token::I64(-5),
+            ],
+        );
+        assert_tokens(
+            &test_u64,
+            &[
+                Token::Enum { name: "StaticNode" },
+                Token::Str("U64"),
+                Token::U64(5),
+            ],
+        );
+        assert_tokens(
+            &test_f64,
+            &[
+                Token::Enum { name: "StaticNode" },
+                Token::Str("F64"),
+                Token::F64(5.4),
+            ],
+        );
+        assert_tokens(
+            &test_bool,
+            &[
+                Token::Enum { name: "StaticNode" },
+                Token::Str("Bool"),
+                Token::Bool(true),
+            ],
+        );
+        assert_tokens(
+            &test_null,
+            &[
+                Token::Enum { name: "StaticNode" },
+                Token::Str("Null"),
+                Token::Unit,
+            ],
+        );
     }
 }
