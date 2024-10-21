@@ -1,6 +1,3 @@
-#[cfg(feature = "ordered-float")]
-use ordered_float::OrderedFloat;
-
 use crate::{base::ValueAsScalar, derived::TypedScalarValue};
 
 use super::StaticNode;
