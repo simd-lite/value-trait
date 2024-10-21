@@ -1,3 +1,4 @@
+#[cfg(feature = "ordered-float")]
 use ordered_float::OrderedFloat;
 
 use crate::StaticNode;

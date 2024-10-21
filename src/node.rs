@@ -200,10 +200,7 @@ impl ValueAsScalar for StaticNode {
     #[must_use]
     fn as_f64(&self) -> Option<f64> {
         match self {
-            #[cfg(not(feature = "ordered-float"))]
-            Self::F64(i) => Some(*i),
-            #[cfg(feature = "ordered-float")]
-            Self::F64(i) => Some(i.0),
+            Self::F64(i) => Some((*i).into()),
             _ => None,
         }
     }
@@ -214,10 +211,7 @@ impl ValueAsScalar for StaticNode {
     #[allow(clippy::cast_precision_loss)]
     fn cast_f64(&self) -> Option<f64> {
         match self {
-            #[cfg(not(feature = "ordered-float"))]
-            Self::F64(i) => Some(*i),
-            #[cfg(feature = "ordered-float")]
-            Self::F64(i) => Some(i.0),
+            Self::F64(i) => Some((*i).into()),
             Self::I64(i) => Some(*i as f64),
             Self::U64(i) => Some(*i as f64),
             _ => None,
@@ -229,10 +223,7 @@ impl ValueAsScalar for StaticNode {
     #[allow(clippy::cast_precision_loss)]
     fn cast_f64(&self) -> Option<f64> {
         match self {
-            #[cfg(not(feature = "ordered-float"))]
-            Self::F64(i) => Some(*i),
-            #[cfg(feature = "ordered-float")]
-            Self::F64(i) => Some(i.0),
+            Self::F64(i) => Some((*i).into()),
             Self::I64(i) => Some(*i as f64),
             Self::U64(i) => Some(*i as f64),
             Self::I128(i) => Some(*i as f64),
@@ -310,7 +301,10 @@ impl PartialEq for StaticNode {
         match (self, other) {
             (Self::Null, Self::Null) => true,
             (Self::Bool(v1), Self::Bool(v2)) => v1.eq(v2),
+            #[cfg(not(feature = "ordered-float"))]
             (Self::F64(v1), Self::F64(v2)) => approx_eq!(f64, *v1, *v2),
+            #[cfg(feature = "ordered-float")]
+            (Self::F64(v1), Self::F64(v2)) => v1.eq(v2),
             (Self::U64(v1), Self::U64(v2)) => v1.eq(v2),
             (Self::U128(v1), Self::U128(v2)) => v1.eq(v2),
             (Self::I64(v1), Self::I64(v2)) => v1.eq(v2),
