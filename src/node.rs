@@ -157,7 +157,7 @@ impl ValueAsScalar for StaticNode {
             Self::I128(i) => Some(*i),
             Self::U128(i) => i128::try_from(*i).ok(),
             Self::I64(i) => Some(i128::from(*i)),
-            Self::U64(i) => i128::try_from(*i).ok(),
+            Self::U64(i) => Some(i128::from(*i)),
             _ => None,
         }
     }
@@ -227,6 +227,7 @@ impl ValueAsScalar for StaticNode {
     #[allow(clippy::cast_precision_loss)]
     fn cast_f64(&self) -> Option<f64> {
         match self {
+            #[allow(clippy::useless_conversion)] // .into() required by ordered-float
             Self::F64(i) => Some((*i).into()),
             Self::I64(i) => Some(*i as f64),
             Self::U64(i) => Some(*i as f64),
