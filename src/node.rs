@@ -32,7 +32,7 @@ pub enum StaticNode {
     #[cfg(not(feature = "ordered-float"))]
     F64(f64),
     #[cfg(feature = "ordered-float")]
-    /// A floating point value, as an OrderedFloat (not allow for Eq)
+    /// A floating point value, as an `OrderedFloat` (not allow for Eq)
     F64(OrderedFloat<f64>),
     /// A boolean value
     Bool(bool),

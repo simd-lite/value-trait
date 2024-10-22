@@ -112,7 +112,6 @@ impl From<usize> for StaticNode {
     }
 }
 
-
 /********* f_ **********/
 #[cfg(not(feature = "ordered-float"))]
 impl From<f32> for StaticNode {
@@ -137,7 +136,7 @@ impl From<f32> for StaticNode {
     #[inline]
     #[must_use]
     fn from(f: f32) -> Self {
-        Self::F64(OrderedFloat::from(f as f64))
+        Self::F64(OrderedFloat::from(f64::from(f)))
     }
 }
 
