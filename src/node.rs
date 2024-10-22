@@ -15,8 +15,10 @@ mod from;
 
 /// Static tape node
 #[derive(Debug, Clone, Copy)]
+#[cfg_attr(feature = "ordered-float", derive(Eq))]
 #[cfg_attr(feature = "c-abi", repr(C))]
 #[cfg_attr(feature = "c-abi", derive(abi_stable::StableAbi))]
+
 pub enum StaticNode {
     /// A signed 64 bit integer.
     I64(i64),
@@ -200,6 +202,7 @@ impl ValueAsScalar for StaticNode {
     #[must_use]
     fn as_f64(&self) -> Option<f64> {
         match self {
+            #[allow(clippy::useless_conversion)] // .into() required by ordered-float
             Self::F64(i) => Some((*i).into()),
             _ => None,
         }
@@ -211,6 +214,7 @@ impl ValueAsScalar for StaticNode {
     #[allow(clippy::cast_precision_loss)]
     fn cast_f64(&self) -> Option<f64> {
         match self {
+            #[allow(clippy::useless_conversion)] // .into() required by ordered-float
             Self::F64(i) => Some((*i).into()),
             Self::I64(i) => Some(*i as f64),
             Self::U64(i) => Some(*i as f64),
@@ -269,9 +273,6 @@ impl fmt::Display for StaticNode {
         }
     }
 }
-
-#[cfg(feature = "ordered-float")]
-impl Eq for StaticNode {}
 
 #[allow(clippy::cast_sign_loss, clippy::default_trait_access)]
 impl PartialEq for StaticNode {
