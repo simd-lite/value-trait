@@ -16,6 +16,7 @@ itoa = "1"
 ryu = "1"
 halfbrown = { version = "0.2", optional = true }
 float-cmp = "0.9"
+ordered-float = { version = "4", optional = true }
 hashbrown = { version = "0.14", optional = true }
 abi_stable = { version = "0.11.0", optional = true, default-features = false }
 
@@ -27,11 +28,14 @@ default = ["custom-types", "halfbrown", "runtime-detection"]
 # Support for custom types
 custom-types = []
 
-# Support for abi-stable's `StableAbi` implementation
+# Support for abi-stable's `StableAbi` implementation - INCOMPATIBLE WITH ordered-float
 c-abi = ["abi_stable"]
 
 # use runtime detection of the CPU features where possible instead of enforcing an instruction set
 runtime-detection = []
+
+# wrap floats in ordered-float - allowing them to be Eq - INCOMPATIBLE WITH c-abi
+ordered-float = ["dep:ordered-float"]
 
 # portable simd support (as of rust 1.73 nightly only)
 portable = []

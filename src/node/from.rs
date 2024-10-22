@@ -1,3 +1,6 @@
+#[cfg(feature = "ordered-float")]
+use ordered_float::OrderedFloat;
+
 use crate::StaticNode;
 
 /********* atoms **********/
@@ -110,6 +113,7 @@ impl From<usize> for StaticNode {
 }
 
 /********* f_ **********/
+#[cfg(not(feature = "ordered-float"))]
 impl From<f32> for StaticNode {
     #[inline]
     #[must_use]
@@ -118,10 +122,29 @@ impl From<f32> for StaticNode {
     }
 }
 
+#[cfg(not(feature = "ordered-float"))]
 impl From<f64> for StaticNode {
     #[inline]
     #[must_use]
     fn from(f: f64) -> Self {
         Self::F64(f)
+    }
+}
+
+#[cfg(feature = "ordered-float")]
+impl From<f32> for StaticNode {
+    #[inline]
+    #[must_use]
+    fn from(f: f32) -> Self {
+        Self::F64(OrderedFloat::from(f64::from(f)))
+    }
+}
+
+#[cfg(feature = "ordered-float")]
+impl From<f64> for StaticNode {
+    #[inline]
+    #[must_use]
+    fn from(f: f64) -> Self {
+        Self::F64(OrderedFloat::from(f))
     }
 }

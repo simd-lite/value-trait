@@ -23,6 +23,9 @@ compile_error!(
     the `128bit` feature, and that they have been merged by Cargo."
 );
 
+#[cfg(all(feature = "c-abi", feature = "ordered-float"))]
+compile_error!("Combining the features `c-abi` and `ordered-float` is impossible because ordered_float::OrderedFloat does not implement `StableAbi`");
+
 use std::borrow::Cow;
 use std::fmt;
 
