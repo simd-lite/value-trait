@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-use crate::{array::Array, object::Object, TryTypeError, ValueType};
+use crate::{TryTypeError, ValueType, array::Array, object::Object};
 
 /// Type information on a value
 pub trait TypedValue {

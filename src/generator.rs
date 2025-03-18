@@ -128,7 +128,6 @@ pub trait BaseGenerator {
     #[inline]
     fn write_string_content(&mut self, string: &str) -> io::Result<()> {
         let mut string = string.as_bytes();
-
         unsafe {
             // Looking at the table above the lower 5 bits are entirely
             // quote characters that gives us a bitmask of 0x1f for that
@@ -136,7 +135,6 @@ pub trait BaseGenerator {
             // this range.
             stry!(self.write_str_simd(&mut string));
         }
-
         write_string_rust(self.get_writer(), &mut string)
     }
 
@@ -238,7 +236,9 @@ pub trait BaseGenerator {
     /// # Errors
     ///  if the write fails
     unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
-        self.write_simple_string(std::str::from_utf8_unchecked(string))
+        write_string_rust(self.get_writer(), string)?;
+        *string = &string[string.len()..];
+        Ok(())
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -257,20 +257,24 @@ pub trait BaseGenerator {
 
         #[inline]
         unsafe fn bit_mask() -> uint8x16_t {
-            mem::transmute([
-                0x01_u8, 0x02, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x4, 0x8, 0x10, 0x20,
-                0x40, 0x80,
-            ])
+            unsafe {
+                mem::transmute([
+                    0x01_u8, 0x02, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x4, 0x8, 0x10,
+                    0x20, 0x40, 0x80,
+                ])
+            }
         }
 
         #[inline]
         unsafe fn neon_movemask(input: uint8x16_t) -> u16 {
-            let simd_input: uint8x16_t = vandq_u8(input, bit_mask());
-            let tmp: uint8x16_t = vpaddq_u8(simd_input, simd_input);
-            let tmp = vpaddq_u8(tmp, tmp);
-            let tmp = vpaddq_u8(tmp, tmp);
+            unsafe {
+                let simd_input: uint8x16_t = vandq_u8(input, bit_mask());
+                let tmp: uint8x16_t = vpaddq_u8(simd_input, simd_input);
+                let tmp = vpaddq_u8(tmp, tmp);
+                let tmp = vpaddq_u8(tmp, tmp);
 
-            vgetq_lane_u16(vreinterpretq_u16_u8(tmp), 0)
+                vgetq_lane_u16(vreinterpretq_u16_u8(tmp), 0)
+            }
         }
 
         let writer = self.get_writer();
@@ -278,36 +282,38 @@ pub trait BaseGenerator {
         // we repeate the same logic as above but with
         // only 16 bytes
         let mut idx = 0;
-        let zero = vdupq_n_u8(0);
-        let lower_quote_range = vdupq_n_u8(0x1F);
-        let quote = vdupq_n_u8(b'"');
-        let backslash = vdupq_n_u8(b'\\');
-        while string.len() - idx > 16 {
-            // Load 16 bytes of data;
-            let data: uint8x16_t = vld1q_u8(string.as_ptr().add(idx));
-            // Test the data against being backslash and quote.
-            let bs_or_quote = vorrq_u8(vceqq_u8(data, backslash), vceqq_u8(data, quote));
-            // Now mask the data with the quote range (0x1F).
-            let in_quote_range = vandq_u8(data, lower_quote_range);
-            // then test of the data is unchanged. aka: xor it with the
-            // Any field that was inside the quote range it will be zero
-            // now.
-            let is_unchanged = veorq_u8(data, in_quote_range);
-            let in_range = vceqq_u8(is_unchanged, zero);
-            let quote_bits = neon_movemask(vorrq_u8(bs_or_quote, in_range));
-            if quote_bits == 0 {
-                idx += 16;
-            } else {
-                let quote_dist = quote_bits.trailing_zeros() as usize;
-                stry!(writer.write_all(&string[0..idx + quote_dist]));
-                let ch = string[idx + quote_dist];
-                match ESCAPED[ch as usize] {
-                    b'u' => stry!(u_encode(writer, ch)),
-                    escape => stry!(writer.write_all(&[b'\\', escape])),
-                }
+        unsafe {
+            let zero = vdupq_n_u8(0);
+            let lower_quote_range = vdupq_n_u8(0x1F);
+            let quote = vdupq_n_u8(b'"');
+            let backslash = vdupq_n_u8(b'\\');
+            while string.len() - idx > 16 {
+                // Load 16 bytes of data;
+                let data: uint8x16_t = vld1q_u8(string.as_ptr().add(idx));
+                // Test the data against being backslash and quote.
+                let bs_or_quote = vorrq_u8(vceqq_u8(data, backslash), vceqq_u8(data, quote));
+                // Now mask the data with the quote range (0x1F).
+                let in_quote_range = vandq_u8(data, lower_quote_range);
+                // then test of the data is unchanged. aka: xor it with the
+                // Any field that was inside the quote range it will be zero
+                // now.
+                let is_unchanged = veorq_u8(data, in_quote_range);
+                let in_range = vceqq_u8(is_unchanged, zero);
+                let quote_bits = neon_movemask(vorrq_u8(bs_or_quote, in_range));
+                if quote_bits == 0 {
+                    idx += 16;
+                } else {
+                    let quote_dist = quote_bits.trailing_zeros() as usize;
+                    stry!(writer.write_all(&string[0..idx + quote_dist]));
+                    let ch = string[idx + quote_dist];
+                    match ESCAPED[ch as usize] {
+                        b'u' => stry!(u_encode(writer, ch)),
+                        escape => stry!(writer.write_all(&[b'\\', escape])),
+                    }
 
-                *string = &string[idx + quote_dist + 1..];
-                idx = 0;
+                    *string = &string[idx + quote_dist + 1..];
+                    idx = 0;
+                }
             }
         }
         stry!(writer.write_all(&string[0..idx]));
@@ -414,11 +420,9 @@ where
         write_str_simd_sse42(writer, string)
     } else {
         #[cfg(not(feature = "portable"))]
-        let r = write_string_rust(writer, string);
+        return write_string_rust(writer, string);
         #[cfg(feature = "portable")]
-        let r = write_str_simd_portable(writer, string);
-
-        r
+        return write_str_simd_portable(writer, string);
     }
 }
 #[inline]
@@ -468,7 +472,7 @@ unsafe fn write_str_simd_portable<W>(writer: &mut W, string: &mut &[u8]) -> io::
 where
     W: Write,
 {
-    use std::simd::{u8x32, SimdPartialEq, ToBitMask};
+    use std::simd::{SimdPartialEq, ToBitMask, u8x32};
 
     let mut idx = 0;
     let zero = u8x32::splat(0);
@@ -781,7 +785,7 @@ where
     }
 }
 
-impl<'w, W> BaseGenerator for WriterGenerator<'w, W>
+impl<W> BaseGenerator for WriterGenerator<'_, W>
 where
     W: Write,
 {
@@ -799,7 +803,6 @@ where
 }
 
 /// Pretty Writer Generator
-
 pub struct PrettyWriterGenerator<'w, W>
 where
     W: 'w + Write,
@@ -823,7 +826,7 @@ where
     }
 }
 
-impl<'w, W> BaseGenerator for PrettyWriterGenerator<'w, W>
+impl<W> BaseGenerator for PrettyWriterGenerator<'_, W>
 where
     W: Write,
 {
@@ -871,5 +874,24 @@ pub(crate) fn extend_from_slice(dst: &mut Vec<u8>, src: &[u8]) {
         // We would have failed if `reserve` overflowed\
         ptr::copy_nonoverlapping(src.as_ptr(), dst.as_mut_ptr().add(dst_len), src_len);
         dst.set_len(dst_len + src_len);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn test_write_string_rust() {
+        let mut writer = Vec::new();
+        let mut string = "Hello, World!".as_bytes();
+        super::write_string_rust(&mut writer, &mut string).expect("failed to write string");
+        assert_eq!(writer, "Hello, World!".as_bytes());
+    }
+    #[test]
+    fn test_write_string_rust2() {
+        let mut writer = Vec::new();
+        let mut string = "Hello, \"World!\"".as_bytes();
+        super::write_string_rust(&mut writer, &mut string).expect("failed to write string");
+        assert_eq!(writer, "Hello, \\\"World!\\\"".as_bytes());
     }
 }

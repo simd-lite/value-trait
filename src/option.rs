@@ -1,7 +1,7 @@
 use crate::{
+    ExtendedValueType, ValueType,
     base::{TypedValue, ValueAsScalar, ValueIntoString},
     prelude::{ValueAsArray, ValueAsObject, ValueIntoArray, ValueIntoObject},
-    ExtendedValueType, ValueType,
 };
 
 impl<V> ValueIntoString for Option<V>

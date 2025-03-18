@@ -1,6 +1,7 @@
 use std::{borrow::Borrow, hash::Hash};
 
 use crate::{
+    AccessError, ExtendedValueType, TryTypeError, ValueType,
     array::{self, ArrayMut, Indexed, IndexedMut},
     base::{TypedValue, ValueAsScalar, ValueIntoString, ValueTryAsArrayMut, ValueTryAsMutObject},
     derived::{
@@ -16,7 +17,6 @@ use crate::{
         ValueAsArray, ValueAsMutArray, ValueAsMutObject, ValueAsObject, ValueIntoArray,
         ValueIntoObject,
     },
-    AccessError, ExtendedValueType, TryTypeError, ValueType,
 };
 
 impl<T> ValueTryIntoString for T

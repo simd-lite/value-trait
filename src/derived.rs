@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, hash::Hash};
 
-use crate::{array::Array, object::Object, AccessError, TryTypeError};
+use crate::{AccessError, TryTypeError, array::Array, object::Object};
 
 /// `try_as_*` access to scalar value types
 pub trait ValueTryAsScalar {
@@ -678,7 +678,6 @@ pub trait MutableValueArrayAccess<I> {
 /// Access to a value as an array with error handling
 pub trait ValueArrayTryAccess {
     /// The target for nested lookups
-
     type Target: ?Sized;
     /// Tries to get a value based on n index, returns a type error if the
     /// current value isn't an Array, returns `None` if the index is out of bounds
@@ -705,7 +704,6 @@ pub trait ValueTryIntoArray {
     /// Tries to turn the value into it's array representation
     /// # Errors
     /// if the requested type doesn't match the actual type
-
     fn try_into_array(self) -> Result<Self::Array, TryTypeError>;
 }
 /// A trait that specifies how to turn the Value `into` it's sub types with error handling
