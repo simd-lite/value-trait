@@ -24,15 +24,15 @@ pub trait Object {
 
     /// Iterates over the key value paris
     #[must_use]
-    fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + 'i>;
+    fn iter(&self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + '_>;
 
     /// Iterates over the keys
     #[must_use]
-    fn keys<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Key> + 'i>;
+    fn keys(&self) -> Box<dyn Iterator<Item = &Self::Key> + '_>;
 
     /// Iterates over the values
     #[must_use]
-    fn values<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Element> + 'i>;
+    fn values(&self) -> Box<dyn Iterator<Item = &Self::Element> + '_>;
 
     /// Number of key/value pairs
     #[must_use]
@@ -93,17 +93,17 @@ where
     }
 
     #[inline]
-    fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + 'i> {
+    fn iter(&self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + '_> {
         Box::new(Halfbrown::iter(self))
     }
 
     #[inline]
-    fn keys<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Key> + 'i> {
+    fn keys(&self) -> Box<dyn Iterator<Item = &Self::Key> + '_> {
         Box::new(Halfbrown::keys(self))
     }
 
     #[inline]
-    fn values<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Element> + 'i> {
+    fn values(&self) -> Box<dyn Iterator<Item = &Self::Element> + '_> {
         Box::new(Halfbrown::values(self))
     }
 
@@ -113,6 +113,7 @@ where
     }
 }
 
+#[cfg(feature = "halfbrown")]
 impl<MapK, MapE, S> ObjectMut for Halfbrown<MapK, MapE, S>
 where
     MapK: Hash + Eq,
@@ -167,17 +168,17 @@ where
     }
 
     #[inline]
-    fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + 'i> {
+    fn iter(&self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + '_> {
         Box::new(HashMap::iter(self))
     }
 
     #[inline]
-    fn keys<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Key> + 'i> {
+    fn keys(&self) -> Box<dyn Iterator<Item = &Self::Key> + '_> {
         Box::new(HashMap::keys(self))
     }
 
     #[inline]
-    fn values<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Element> + 'i> {
+    fn values(&self) -> Box<dyn Iterator<Item = &Self::Element> + '_> {
         Box::new(HashMap::values(self))
     }
 

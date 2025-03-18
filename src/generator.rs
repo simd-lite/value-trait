@@ -128,7 +128,6 @@ pub trait BaseGenerator {
     #[inline]
     fn write_string_content(&mut self, string: &str) -> io::Result<()> {
         let mut string = string.as_bytes();
-
         unsafe {
             // Looking at the table above the lower 5 bits are entirely
             // quote characters that gives us a bitmask of 0x1f for that
@@ -136,7 +135,6 @@ pub trait BaseGenerator {
             // this range.
             stry!(self.write_str_simd(&mut string));
         }
-
         write_string_rust(self.get_writer(), &mut string)
     }
 
@@ -238,7 +236,9 @@ pub trait BaseGenerator {
     /// # Errors
     ///  if the write fails
     unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
-        self.write_simple_string(std::str::from_utf8_unchecked(string))
+        write_string_rust(self.get_writer(), string)?;
+        *string = &string[string.len()..];
+        Ok(())
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -409,16 +409,14 @@ where
     // mem::transmute::<FnRaw, WriteStrFn>(fun)(writer, string)
 
     if std::is_x86_feature_detected!("avx2") {
-        write_str_simd_avx2(writer, string)
+        return write_str_simd_avx2(writer, string);
     } else if std::is_x86_feature_detected!("sse4.2") {
-        write_str_simd_sse42(writer, string)
+        return write_str_simd_sse42(writer, string);
     } else {
         #[cfg(not(feature = "portable"))]
-        let r = write_string_rust(writer, string);
+        return write_string_rust(writer, string);
         #[cfg(feature = "portable")]
-        let r = write_str_simd_portable(writer, string);
-
-        r
+        return write_str_simd_portable(writer, string);
     }
 }
 #[inline]
@@ -781,7 +779,7 @@ where
     }
 }
 
-impl<'w, W> BaseGenerator for WriterGenerator<'w, W>
+impl<W> BaseGenerator for WriterGenerator<'_, W>
 where
     W: Write,
 {
@@ -799,7 +797,6 @@ where
 }
 
 /// Pretty Writer Generator
-
 pub struct PrettyWriterGenerator<'w, W>
 where
     W: 'w + Write,
@@ -823,7 +820,7 @@ where
     }
 }
 
-impl<'w, W> BaseGenerator for PrettyWriterGenerator<'w, W>
+impl<W> BaseGenerator for PrettyWriterGenerator<'_, W>
 where
     W: Write,
 {
@@ -871,5 +868,24 @@ pub(crate) fn extend_from_slice(dst: &mut Vec<u8>, src: &[u8]) {
         // We would have failed if `reserve` overflowed\
         ptr::copy_nonoverlapping(src.as_ptr(), dst.as_mut_ptr().add(dst_len), src_len);
         dst.set_len(dst_len + src_len);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn test_write_string_rust() {
+        let mut writer = Vec::new();
+        let mut string = "Hello, World!".as_bytes();
+        super::write_string_rust(&mut writer, &mut string).expect("failed to write string");
+        assert_eq!(writer, "Hello, World!".as_bytes());
+    }
+    #[test]
+    fn test_write_string_rust2() {
+        let mut writer = Vec::new();
+        let mut string = "Hello, \"World!\"".as_bytes();
+        super::write_string_rust(&mut writer, &mut string).expect("failed to write string");
+        assert_eq!(writer, "Hello, \\\"World!\\\"".as_bytes());
     }
 }

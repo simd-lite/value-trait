@@ -18,7 +18,7 @@ pub trait Array {
 
     /// Iterates over the values paris
     #[must_use]
-    fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Element> + 'i>;
+    fn iter(&self) -> Box<dyn Iterator<Item = &Self::Element> + '_>;
 
     /// Number of key/value pairs
     #[must_use]
@@ -69,7 +69,7 @@ where
 impl<T> Array for Vec<T> {
     type Element = T;
 
-    fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = &T> + 'i> {
+    fn iter(&self) -> Box<dyn Iterator<Item = &T> + '_> {
         Box::new(<[T]>::iter(self))
     }
 

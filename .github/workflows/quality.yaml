@@ -52,8 +52,10 @@ jobs:
         rustflags:
           - flags: "-C target-cpu=native"
             name: "avx2"
-          - flags: "-C target-cpu=native -C target-feature=-avx2"
+          - flags: "-C target-feature=-avx2"
             name: "sse"
+          - flags: "-C target-feature=-avx2,-sse4.2"
+            name: "compat"
         features:
           - "128bit"
           - "custom-types"
