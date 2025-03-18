@@ -466,7 +466,7 @@ unsafe fn write_str_simd_portable<W>(writer: &mut W, string: &mut &[u8]) -> io::
 where
     W: Write,
 {
-    use std::simd::{u8x32, SimdPartialEq, ToBitMask};
+    use std::simd::{SimdPartialEq, ToBitMask, u8x32};
 
     let mut idx = 0;
     let zero = u8x32::splat(0);

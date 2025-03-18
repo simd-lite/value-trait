@@ -23,7 +23,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: "1.64.0"
+          toolchain: "1.85.0"
           override: true
           components: clippy, rustfmt
       - name: Validate cargo format
@@ -68,7 +68,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: "1.64.0"
+          toolchain: "1.65.0"
           override: true
           components: llvm-tools-preview
       - name: Install cargo-llcm-cov

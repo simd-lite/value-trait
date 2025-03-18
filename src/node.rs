@@ -1,6 +1,6 @@
 use crate::base::{TypedValue, ValueAsScalar};
 
-use super::{fmt, ValueType};
+use super::{ValueType, fmt};
 use std::convert::TryFrom;
 use std::ops::{Index, IndexMut};
 

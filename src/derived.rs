@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, hash::Hash};
 
-use crate::{array::Array, object::Object, AccessError, TryTypeError};
+use crate::{AccessError, TryTypeError, array::Array, object::Object};
 
 /// `try_as_*` access to scalar value types
 pub trait ValueTryAsScalar {

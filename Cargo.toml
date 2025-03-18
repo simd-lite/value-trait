@@ -2,13 +2,13 @@
 name = "value-trait"
 version = "0.10.1"
 authors = ["Heinz N. Gies <heinz@licenser.net>"]
-edition = "2021"
+edition = "2024"
 license = "Apache-2.0/MIT"
 description = "Traits to deal with JSONesque values"
 repository = "https://github.com/simd-lite/value-trait"
 readme = "README.md"
 documentation = "https://docs.rs/value-trait"
-rust-version = "1.64"
+rust-version = "1.85"
 
 
 [dependencies]
