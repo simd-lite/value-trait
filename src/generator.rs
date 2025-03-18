@@ -415,9 +415,9 @@ where
     // mem::transmute::<FnRaw, WriteStrFn>(fun)(writer, string)
 
     if std::is_x86_feature_detected!("avx2") {
-        return write_str_simd_avx2(writer, string);
+        write_str_simd_avx2(writer, string)
     } else if std::is_x86_feature_detected!("sse4.2") {
-        return write_str_simd_sse42(writer, string);
+        write_str_simd_sse42(writer, string)
     } else {
         #[cfg(not(feature = "portable"))]
         return write_string_rust(writer, string);
