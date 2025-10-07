@@ -18,7 +18,6 @@ mod from;
 #[cfg_attr(feature = "ordered-float", derive(Eq))]
 #[cfg_attr(feature = "c-abi", repr(C))]
 #[cfg_attr(feature = "c-abi", derive(abi_stable::StableAbi))]
-
 pub enum StaticNode {
     /// A signed 64 bit integer.
     I64(i64),
@@ -45,7 +44,6 @@ pub enum StaticNode {
 impl Index<&str> for StaticNode {
     type Output = ();
     #[inline]
-    #[must_use]
     fn index(&self, _index: &str) -> &Self::Output {
         panic!("Not supported")
     }
@@ -54,7 +52,6 @@ impl Index<&str> for StaticNode {
 impl Index<usize> for StaticNode {
     type Output = ();
     #[inline]
-    #[must_use]
     fn index(&self, _index: usize) -> &Self::Output {
         panic!("Not supported")
     }
@@ -62,7 +59,6 @@ impl Index<usize> for StaticNode {
 
 impl IndexMut<&str> for StaticNode {
     #[inline]
-    #[must_use]
     fn index_mut(&mut self, _index: &str) -> &mut Self::Output {
         panic!("Not supported")
     }
@@ -70,7 +66,6 @@ impl IndexMut<&str> for StaticNode {
 
 impl IndexMut<usize> for StaticNode {
     #[inline]
-    #[must_use]
     fn index_mut(&mut self, _index: usize) -> &mut Self::Output {
         panic!("Not supported")
     }
@@ -79,7 +74,6 @@ impl IndexMut<usize> for StaticNode {
 impl TypedValue for StaticNode {
     #[cfg(not(feature = "128bit"))]
     #[inline]
-    #[must_use]
     fn value_type(&self) -> ValueType {
         match self {
             Self::Null => ValueType::Null,
@@ -93,7 +87,6 @@ impl TypedValue for StaticNode {
 
     #[cfg(feature = "128bit")]
     #[inline]
-    #[must_use]
     fn value_type(&self) -> ValueType {
         match self {
             Self::Null => ValueType::Null,
@@ -109,7 +102,6 @@ impl TypedValue for StaticNode {
 
 impl ValueAsScalar for StaticNode {
     #[inline]
-    #[must_use]
     fn as_null(&self) -> Option<()> {
         match self {
             Self::Null => Some(()),
@@ -117,7 +109,6 @@ impl ValueAsScalar for StaticNode {
         }
     }
     #[inline]
-    #[must_use]
     fn as_bool(&self) -> Option<bool> {
         match self {
             Self::Bool(b) => Some(*b),
@@ -127,7 +118,6 @@ impl ValueAsScalar for StaticNode {
 
     #[cfg(not(feature = "128bit"))]
     #[inline]
-    #[must_use]
     fn as_i64(&self) -> Option<i64> {
         match self {
             Self::I64(i) => Some(*i),
@@ -164,7 +154,6 @@ impl ValueAsScalar for StaticNode {
 
     #[cfg(not(feature = "128bit"))]
     #[inline]
-    #[must_use]
     fn as_u64(&self) -> Option<u64> {
         match self {
             Self::I64(i) => u64::try_from(*i).ok(),
@@ -199,7 +188,6 @@ impl ValueAsScalar for StaticNode {
     }
 
     #[inline]
-    #[must_use]
     fn as_f64(&self) -> Option<f64> {
         match self {
             #[allow(clippy::useless_conversion)] // .into() required by ordered-float
@@ -210,7 +198,6 @@ impl ValueAsScalar for StaticNode {
 
     #[cfg(not(feature = "128bit"))]
     #[inline]
-    #[must_use]
     #[allow(clippy::cast_precision_loss)]
     fn cast_f64(&self) -> Option<f64> {
         match self {
@@ -238,7 +225,6 @@ impl ValueAsScalar for StaticNode {
     }
 
     #[inline]
-    #[must_use]
     fn as_str(&self) -> Option<&str> {
         None
     }
@@ -279,7 +265,6 @@ impl fmt::Display for StaticNode {
 impl PartialEq for StaticNode {
     #[cfg(not(feature = "128bit"))]
     #[inline]
-    #[must_use]
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Null, Self::Null) => true,
@@ -333,7 +318,6 @@ impl PartialEq for StaticNode {
 }
 
 impl Default for StaticNode {
-    #[must_use]
     fn default() -> Self {
         Self::Null
     }

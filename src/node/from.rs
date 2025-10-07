@@ -7,7 +7,6 @@ use crate::StaticNode;
 
 impl From<bool> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(b: bool) -> Self {
         Self::Bool(b)
     }
@@ -15,7 +14,6 @@ impl From<bool> for StaticNode {
 
 impl From<()> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(_b: ()) -> Self {
         Self::Null
     }
@@ -24,7 +22,6 @@ impl From<()> for StaticNode {
 /********* i_ **********/
 impl From<i8> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(i: i8) -> Self {
         Self::I64(i64::from(i))
     }
@@ -32,7 +29,6 @@ impl From<i8> for StaticNode {
 
 impl From<i16> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(i: i16) -> Self {
         Self::I64(i64::from(i))
     }
@@ -40,7 +36,6 @@ impl From<i16> for StaticNode {
 
 impl From<i32> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(i: i32) -> Self {
         Self::I64(i64::from(i))
     }
@@ -48,7 +43,6 @@ impl From<i32> for StaticNode {
 
 impl From<i64> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(i: i64) -> Self {
         Self::I64(i)
     }
@@ -65,7 +59,6 @@ impl From<i128> for StaticNode {
 /********* u_ **********/
 impl From<u8> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(i: u8) -> Self {
         Self::U64(u64::from(i))
     }
@@ -73,7 +66,6 @@ impl From<u8> for StaticNode {
 
 impl From<u16> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(i: u16) -> Self {
         Self::U64(u64::from(i))
     }
@@ -81,7 +73,6 @@ impl From<u16> for StaticNode {
 
 impl From<u32> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(i: u32) -> Self {
         Self::U64(u64::from(i))
     }
@@ -89,7 +80,6 @@ impl From<u32> for StaticNode {
 
 impl From<u64> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(i: u64) -> Self {
         Self::U64(i)
     }
@@ -106,7 +96,6 @@ impl From<u128> for StaticNode {
 
 impl From<usize> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(i: usize) -> Self {
         Self::U64(i as u64)
     }
@@ -116,7 +105,6 @@ impl From<usize> for StaticNode {
 #[cfg(not(feature = "ordered-float"))]
 impl From<f32> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(f: f32) -> Self {
         Self::F64(f64::from(f))
     }
@@ -125,7 +113,6 @@ impl From<f32> for StaticNode {
 #[cfg(not(feature = "ordered-float"))]
 impl From<f64> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(f: f64) -> Self {
         Self::F64(f)
     }

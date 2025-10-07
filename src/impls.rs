@@ -282,7 +282,6 @@ where
     type Key = <T::Object as Object>::Key;
     type Target = <T::Object as Object>::Element;
     #[inline]
-    #[must_use]
     fn get<Q>(&self, k: &Q) -> Option<&Self::Target>
     where
         Self::Key: Borrow<Q>,
@@ -292,7 +291,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn contains_key<Q>(&self, k: &Q) -> bool
     where
         Self::Key: Borrow<Q>,
@@ -326,7 +324,6 @@ where
 {
     type Target = <<T as ValueAsArray>::Array as Indexed<I>>::Element;
     #[inline]
-    #[must_use]
     fn get_idx(&self, i: I) -> Option<&Self::Target> {
         self.as_array().and_then(|a| a.get(i))
     }
@@ -356,7 +353,6 @@ where
 {
     type Key = T::Key;
     #[inline]
-    #[must_use]
     fn get_bool<Q>(&self, k: &Q) -> Option<bool>
     where
         Self::Key: Borrow<Q>,
@@ -366,7 +362,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn get_i128<Q>(&self, k: &Q) -> Option<i128>
     where
         Self::Key: Borrow<Q>,
@@ -376,7 +371,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn get_i64<Q>(&self, k: &Q) -> Option<i64>
     where
         Self::Key: Borrow<Q>,
@@ -386,7 +380,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn get_i32<Q>(&self, k: &Q) -> Option<i32>
     where
         Self::Key: Borrow<Q>,
@@ -396,7 +389,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn get_i16<Q>(&self, k: &Q) -> Option<i16>
     where
         Self::Key: Borrow<Q>,
@@ -406,7 +398,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn get_i8<Q>(&self, k: &Q) -> Option<i8>
     where
         Self::Key: Borrow<Q>,
@@ -416,7 +407,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn get_u128<Q>(&self, k: &Q) -> Option<u128>
     where
         Self::Key: Borrow<Q>,
@@ -426,7 +416,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn get_u64<Q>(&self, k: &Q) -> Option<u64>
     where
         Self::Key: Borrow<Q>,
@@ -436,7 +425,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn get_usize<Q>(&self, k: &Q) -> Option<usize>
     where
         Self::Key: Borrow<Q>,
@@ -446,7 +434,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn get_u32<Q>(&self, k: &Q) -> Option<u32>
     where
         Self::Key: Borrow<Q>,
@@ -456,7 +443,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn get_u16<Q>(&self, k: &Q) -> Option<u16>
     where
         Self::Key: Borrow<Q>,
@@ -466,7 +452,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn get_u8<Q>(&self, k: &Q) -> Option<u8>
     where
         Self::Key: Borrow<Q>,
@@ -476,7 +461,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn get_f64<Q>(&self, k: &Q) -> Option<f64>
     where
         Self::Key: Borrow<Q>,
@@ -486,7 +470,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn get_f32<Q>(&self, k: &Q) -> Option<f32>
     where
         Self::Key: Borrow<Q>,
@@ -496,7 +479,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn get_str<Q>(&self, k: &Q) -> Option<&str>
     where
         Self::Key: Borrow<Q>,
@@ -516,7 +498,6 @@ where
     type Array = <T::Target as ValueAsArray>::Array;
 
     #[inline]
-    #[must_use]
     fn get_array<Q>(&self, k: &Q) -> Option<&Self::Array>
     where
         Self::Key: Borrow<Q>,
@@ -535,7 +516,6 @@ where
     type Object = <T::Target as ValueAsObject>::Object;
 
     #[inline]
-    #[must_use]
     fn get_object<Q>(&self, k: &Q) -> Option<&Self::Object>
     where
         Self::Key: Borrow<Q>,
@@ -747,127 +727,106 @@ where
     T: ValueAsScalar,
 {
     #[inline]
-    #[must_use]
     fn is_null(&self) -> bool {
         self.as_null().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_float(&self) -> bool {
         self.is_f64()
     }
 
     #[inline]
-    #[must_use]
     fn is_integer(&self) -> bool {
         self.is_i128() || self.is_u128()
     }
 
     #[inline]
-    #[must_use]
     fn is_number(&self) -> bool {
         self.is_float() || self.is_integer()
     }
 
     #[inline]
-    #[must_use]
     fn is_bool(&self) -> bool {
         self.as_bool().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_i128(&self) -> bool {
         self.as_i128().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_i64(&self) -> bool {
         self.as_i64().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_i32(&self) -> bool {
         self.as_i32().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_i16(&self) -> bool {
         self.as_i16().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_i8(&self) -> bool {
         self.as_i8().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_u128(&self) -> bool {
         self.as_u128().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_u64(&self) -> bool {
         self.as_u64().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_usize(&self) -> bool {
         self.as_usize().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_u32(&self) -> bool {
         self.as_u32().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_u16(&self) -> bool {
         self.as_u16().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_u8(&self) -> bool {
         self.as_u8().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_f64(&self) -> bool {
         self.as_f64().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_f64_castable(&self) -> bool {
         self.cast_f64().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_f32(&self) -> bool {
         self.as_f32().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_str(&self) -> bool {
         self.as_str().is_some()
     }
 
     #[inline]
-    #[must_use]
     fn is_char(&self) -> bool {
         self.as_char().is_some()
     }
@@ -878,7 +837,6 @@ where
     T: ValueAsArray,
 {
     #[inline]
-    #[must_use]
     fn is_array(&self) -> bool {
         self.as_array().is_some()
     }
@@ -888,7 +846,6 @@ where
     T: ValueAsObject,
 {
     #[inline]
-    #[must_use]
     fn is_object(&self) -> bool {
         self.as_object().is_some()
     }

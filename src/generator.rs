@@ -440,7 +440,7 @@ where
                 stry!(u_encode(writer, *ch));
             } else {
                 stry!(writer.write_all(&[b'\\', escape]));
-            };
+            }
             start = index + 1;
         }
     }
