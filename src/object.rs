@@ -2,6 +2,8 @@
 use halfbrown::HashMap as Halfbrown;
 #[cfg(feature = "hashbrown")]
 use hashbrown::HashMap as Hashbrown;
+#[cfg(feature = "indexmap")]
+use indexmap::IndexMap;
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::{borrow::Borrow, hash::BuildHasher};
@@ -148,6 +150,81 @@ where
         Q: ?Sized + Hash + Eq + Ord,
     {
         Halfbrown::remove(self, k)
+    }
+}
+
+#[cfg(feature = "indexmap")]
+impl<MapK, MapE, S: BuildHasher> Object for IndexMap<MapK, MapE, S>
+where
+    MapK: Hash + Eq,
+{
+    type Key = MapK;
+    type Element = MapE;
+
+    #[inline]
+    fn get<Q>(&self, k: &Q) -> Option<&Self::Element>
+    where
+        Self::Key: Borrow<Q>,
+        Q: ?Sized + Hash + Eq + Ord,
+    {
+        IndexMap::get(self, k)
+    }
+
+    #[inline]
+    fn iter(&self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + '_> {
+        Box::new(IndexMap::iter(self))
+    }
+
+    #[inline]
+    fn keys(&self) -> Box<dyn Iterator<Item = &Self::Key> + '_> {
+        Box::new(IndexMap::keys(self))
+    }
+
+    #[inline]
+    fn values(&self) -> Box<dyn Iterator<Item = &Self::Element> + '_> {
+        Box::new(IndexMap::values(self))
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        IndexMap::len(self)
+    }
+}
+
+#[cfg(feature = "indexmap")]
+impl<MapK, MapE, S: BuildHasher> ObjectMut for IndexMap<MapK, MapE, S>
+where
+    MapK: Hash + Eq,
+{
+    type Key = MapK;
+    type Element = MapE;
+
+    #[inline]
+    fn get_mut<Q>(&mut self, k: &Q) -> Option<&mut Self::Element>
+    where
+        Self::Key: Borrow<Q>,
+        Q: ?Sized + Hash + Eq + Ord,
+    {
+        IndexMap::get_mut(self, k)
+    }
+
+    #[inline]
+    fn insert<K, V>(&mut self, k: K, v: V) -> Option<Self::Element>
+    where
+        K: Into<Self::Key>,
+        V: Into<Self::Element>,
+        Self::Key: Hash + Eq,
+    {
+        IndexMap::insert(self, k.into(), v.into())
+    }
+
+    #[inline]
+    fn remove<Q>(&mut self, k: &Q) -> Option<Self::Element>
+    where
+        Self::Key: Borrow<Q>,
+        Q: ?Sized + Hash + Eq + Ord,
+    {
+        IndexMap::shift_remove(self, k)
     }
 }
 
