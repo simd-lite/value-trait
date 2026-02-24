@@ -236,9 +236,7 @@ pub trait BaseGenerator {
     /// # Errors
     ///  if the write fails
     unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
-        write_string_rust(self.get_writer(), string)?;
-        *string = &string[string.len()..];
-        Ok(())
+        write_string_rust(self.get_writer(), string)
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -455,10 +453,14 @@ where
     // Legacy code to handle the remainder of the code
     for (index, ch) in string.iter().enumerate() {
         if ESCAPED[*ch as usize] > 0 {
-            return write_string_container(writer, string, index);
+            write_string_container(writer, string, index)?;
+            *string = &string[string.len()..];
+            return Ok(());
         }
     }
-    writer.write_all(string)
+    writer.write_all(string)?;
+    *string = &string[string.len()..];
+    Ok(())
 }
 
 #[cfg(feature = "portable")]
@@ -892,6 +894,7 @@ mod tests {
         let mut string = "Hello, World!".as_bytes();
         super::write_string_rust(&mut writer, &mut string).expect("failed to write string");
         assert_eq!(writer, "Hello, World!".as_bytes());
+        assert!(string.is_empty(), "write_string_rust should advance string");
     }
     #[test]
     fn test_write_string_rust2() {
@@ -899,5 +902,21 @@ mod tests {
         let mut string = "Hello, \"World!\"".as_bytes();
         super::write_string_rust(&mut writer, &mut string).expect("failed to write string");
         assert_eq!(writer, "Hello, \\\"World!\\\"".as_bytes());
+        assert!(string.is_empty(), "write_string_rust should advance string");
+    }
+
+    #[test]
+    fn test_write_string_long_with_escapes() {
+        use super::{BaseGenerator, DumpGenerator};
+        // Long string with escapes past the 32-byte SIMD boundary exercises
+        // write_string_content -> write_str_simd -> write_string_rust and
+        // catches the double-write bug if the fallback doesn't advance the string.
+        let input = "abcdefghijklmnopqrstuvwxyz012345\"escape here\"";
+        let mut g = DumpGenerator::new();
+        g.write_string(input).expect("write failed");
+        assert_eq!(
+            g.consume(),
+            "\"abcdefghijklmnopqrstuvwxyz012345\\\"escape here\\\"\""
+        );
     }
 }
