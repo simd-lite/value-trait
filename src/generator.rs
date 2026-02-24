@@ -190,7 +190,7 @@ pub trait BaseGenerator {
         any(target_arch = "x86_64", target_arch = "x86"),
     ))]
     unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
-        write_str_simd_fastest(self.get_writer(), string)
+        unsafe { write_str_simd_fastest(self.get_writer(), string) }
     }
     #[cfg(all(target_feature = "avx2", not(feature = "runtime-detection")))]
     #[inline]
@@ -215,7 +215,7 @@ pub trait BaseGenerator {
     /// # Errors
     ///  if the write fails
     unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
-        write_str_simd_sse42(self.get_writer(), string)
+        write_str_simd_sse2(self.get_writer(), string)
     }
 
     #[cfg(not(any(
@@ -225,7 +225,7 @@ pub trait BaseGenerator {
         ),
         feature = "portable",
         target_feature = "avx2",
-        target_feature = "sse4.2",
+        target_feature = "sse2",
         target_feature = "simd128",
         target_arch = "aarch64",
     )))]
@@ -395,7 +395,7 @@ where
     //     if std::is_x86_feature_detected!("avx2") {
     //         write_str_simd_avx2
     //     } else if std::is_x86_feature_detected!("sse4.2") {
-    //         write_str_simd_sse42
+    //         write_str_simd_sse2
     //     } else {
     //         write_str_simd_rust
     //     }
@@ -415,9 +415,9 @@ where
     // mem::transmute::<FnRaw, WriteStrFn>(fun)(writer, string)
 
     if std::is_x86_feature_detected!("avx2") {
-        write_str_simd_avx2(writer, string)
-    } else if std::is_x86_feature_detected!("sse4.2") {
-        write_str_simd_sse42(writer, string)
+        unsafe { write_str_simd_avx2(writer, string) }
+    } else if std::is_x86_feature_detected!("sse2") {
+        unsafe { write_str_simd_sse2(writer, string) }
     } else {
         #[cfg(not(feature = "portable"))]
         return write_string_rust(writer, string);
@@ -536,60 +536,63 @@ where
         _mm256_or_si256, _mm256_set1_epi8, _mm256_xor_si256,
     };
 
-    let mut idx = 0;
-    let zero = _mm256_set1_epi8(0);
-    let lower_quote_range = _mm256_set1_epi8(0x1F_i8);
-    #[allow(clippy::cast_possible_wrap)] // it's a const, it's fine
-    let quote = _mm256_set1_epi8(b'"' as i8);
-    #[allow(clippy::cast_possible_wrap)] // it's a const, it's fine
-    let backslash = _mm256_set1_epi8(b'\\' as i8);
-    while string.len() - idx >= 32 {
-        // Load 32 bytes of data; _mm256_loadu_si256 does not require alignment
-        #[allow(clippy::cast_ptr_alignment)]
-        let data: __m256i = _mm256_loadu_si256(string.as_ptr().add(idx).cast::<__m256i>());
-        // Test the data against being backslash and quote.
-        let bs_or_quote = _mm256_or_si256(
-            _mm256_cmpeq_epi8(data, backslash),
-            _mm256_cmpeq_epi8(data, quote),
-        );
-        // Now mask the data with the quote range (0x1F).
-        let in_quote_range = _mm256_and_si256(data, lower_quote_range);
-        // then test of the data is unchanged. aka: xor it with the
-        // Any field that was inside the quote range it will be zero
-        // now.
-        let is_unchanged = _mm256_xor_si256(data, in_quote_range);
-        let in_range = _mm256_cmpeq_epi8(is_unchanged, zero);
-        let quote_bits = _mm256_movemask_epi8(_mm256_or_si256(bs_or_quote, in_range));
-        if quote_bits == 0 {
-            idx += 32;
-        } else {
-            let quote_dist = quote_bits.trailing_zeros() as usize;
-            stry!(writer.write_all(string.get_unchecked(0..idx + quote_dist)));
+    unsafe {
+        let mut idx = 0;
+        let zero = _mm256_set1_epi8(0);
+        let lower_quote_range = _mm256_set1_epi8(0x1F_i8);
+        #[allow(clippy::cast_possible_wrap)] // it's a const, it's fine
+        let quote = _mm256_set1_epi8(b'"' as i8);
+        #[allow(clippy::cast_possible_wrap)] // it's a const, it's fine
+        let backslash = _mm256_set1_epi8(b'\\' as i8);
+        while string.len() - idx >= 32 {
+            // Load 32 bytes of data; _mm256_loadu_si256 does not require alignment
+            #[allow(clippy::cast_ptr_alignment)]
+            let data: __m256i = _mm256_loadu_si256(string.as_ptr().add(idx).cast::<__m256i>());
+            // Test the data against being backslash and quote.
+            let bs_or_quote = _mm256_or_si256(
+                _mm256_cmpeq_epi8(data, backslash),
+                _mm256_cmpeq_epi8(data, quote),
+            );
+            // Now mask the data with the quote range (0x1F).
+            let in_quote_range = _mm256_and_si256(data, lower_quote_range);
+            // then test of the data is unchanged. aka: xor it with the
+            // Any field that was inside the quote range it will be zero
+            // now.
+            let is_unchanged = _mm256_xor_si256(data, in_quote_range);
+            let in_range = _mm256_cmpeq_epi8(is_unchanged, zero);
+            let quote_bits = _mm256_movemask_epi8(_mm256_or_si256(bs_or_quote, in_range));
+            if quote_bits == 0 {
+                idx += 32;
+            } else {
+                let quote_dist = quote_bits.trailing_zeros() as usize;
+                stry!(writer.write_all(string.get_unchecked(0..idx + quote_dist)));
 
-            let ch = string[idx + quote_dist];
-            match ESCAPED[ch as usize] {
-                b'u' => stry!(u_encode(writer, ch)),
-                escape => stry!(writer.write_all(&[b'\\', escape])),
-            };
+                let ch = string[idx + quote_dist];
+                match ESCAPED[ch as usize] {
+                    b'u' => stry!(u_encode(writer, ch)),
+                    escape => stry!(writer.write_all(&[b'\\', escape])),
+                }
 
-            *string = string.get_unchecked(idx + quote_dist + 1..);
-            idx = 0;
+                *string = string.get_unchecked(idx + quote_dist + 1..);
+                idx = 0;
+            }
         }
+        stry!(writer.write_all(&string[0..idx]));
+        *string = string.get_unchecked(idx..);
     }
-    stry!(writer.write_all(&string[0..idx]));
-    *string = string.get_unchecked(idx..);
+
     Ok(())
 }
 
 #[cfg(any(target_arch = "x86_64", target_arch = "x86"))]
-#[target_feature(enable = "sse4.2")]
+#[target_feature(enable = "sse2")]
 #[inline]
 /// Writes a string with simd-acceleration
 /// # Safety
 /// This function is unsafe because it uses simd instructions
 /// # Errors
 ///  if the write fails
-unsafe fn write_str_simd_sse42<W>(writer: &mut W, string: &mut &[u8]) -> io::Result<()>
+unsafe fn write_str_simd_sse2<W>(writer: &mut W, string: &mut &[u8]) -> io::Result<()>
 where
     W: Write,
 {
@@ -604,46 +607,49 @@ where
         _mm_set1_epi8, _mm_xor_si128,
     };
 
-    let mut idx = 0;
-    let zero = _mm_set1_epi8(0);
-    let lower_quote_range = _mm_set1_epi8(0x1F_i8);
-    #[allow(clippy::cast_possible_wrap)] // it's a const, it's fine
-    let quote = _mm_set1_epi8(b'"' as i8);
-    #[allow(clippy::cast_possible_wrap)] // it's a const, it's fine
-    let backslash = _mm_set1_epi8(b'\\' as i8);
-    while string.len() - idx > 16 {
-        // Load 16 bytes of data; _mm_loadu_si128 does not require alignment
-        #[allow(clippy::cast_ptr_alignment)]
-        let data: __m128i = _mm_loadu_si128(string.as_ptr().add(idx).cast::<__m128i>());
-        // Test the data against being backslash and quote.
-        let bs_or_quote =
-            _mm_or_si128(_mm_cmpeq_epi8(data, backslash), _mm_cmpeq_epi8(data, quote));
-        // Now mask the data with the quote range (0x1F).
-        let in_quote_range = _mm_and_si128(data, lower_quote_range);
-        // then test of the data is unchanged. aka: xor it with the
-        // Any field that was inside the quote range it will be zero
-        // now.
-        let is_unchanged = _mm_xor_si128(data, in_quote_range);
-        let in_range = _mm_cmpeq_epi8(is_unchanged, zero);
-        let quote_bits = _mm_movemask_epi8(_mm_or_si128(bs_or_quote, in_range));
-        if quote_bits == 0 {
-            idx += 16;
-        } else {
-            let quote_dist = quote_bits.trailing_zeros() as usize;
-            stry!(writer.write_all(&string[0..idx + quote_dist]));
+    unsafe {
+        let mut idx = 0;
+        let zero = _mm_set1_epi8(0);
+        let lower_quote_range = _mm_set1_epi8(0x1F_i8);
+        #[allow(clippy::cast_possible_wrap)] // it's a const, it's fine
+        let quote = _mm_set1_epi8(b'"' as i8);
+        #[allow(clippy::cast_possible_wrap)] // it's a const, it's fine
+        let backslash = _mm_set1_epi8(b'\\' as i8);
+        while string.len() - idx > 16 {
+            // Load 16 bytes of data; _mm_loadu_si128 does not require alignment
+            #[allow(clippy::cast_ptr_alignment)]
+            let data: __m128i = _mm_loadu_si128(string.as_ptr().add(idx).cast::<__m128i>());
+            // Test the data against being backslash and quote.
+            let bs_or_quote =
+                _mm_or_si128(_mm_cmpeq_epi8(data, backslash), _mm_cmpeq_epi8(data, quote));
+            // Now mask the data with the quote range (0x1F).
+            let in_quote_range = _mm_and_si128(data, lower_quote_range);
+            // then test of the data is unchanged. aka: xor it with the
+            // Any field that was inside the quote range it will be zero
+            // now.
+            let is_unchanged = _mm_xor_si128(data, in_quote_range);
+            let in_range = _mm_cmpeq_epi8(is_unchanged, zero);
+            let quote_bits = _mm_movemask_epi8(_mm_or_si128(bs_or_quote, in_range));
+            if quote_bits == 0 {
+                idx += 16;
+            } else {
+                let quote_dist = quote_bits.trailing_zeros() as usize;
+                stry!(writer.write_all(&string[0..idx + quote_dist]));
 
-            let ch = string[idx + quote_dist];
-            match ESCAPED[ch as usize] {
-                b'u' => stry!(u_encode(writer, ch)),
-                escape => stry!(writer.write_all(&[b'\\', escape])),
+                let ch = string[idx + quote_dist];
+                match ESCAPED[ch as usize] {
+                    b'u' => stry!(u_encode(writer, ch)),
+                    escape => stry!(writer.write_all(&[b'\\', escape])),
+                }
+
+                *string = &string[idx + quote_dist + 1..];
+                idx = 0;
             }
-
-            *string = &string[idx + quote_dist + 1..];
-            idx = 0;
         }
+        stry!(writer.write_all(&string[0..idx]));
+        *string = &string[idx..];
     }
-    stry!(writer.write_all(&string[0..idx]));
-    *string = &string[idx..];
+
     Ok(())
 }
 
