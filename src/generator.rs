@@ -236,9 +236,7 @@ pub trait BaseGenerator {
     /// # Errors
     ///  if the write fails
     unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
-        write_string_rust(self.get_writer(), string)?;
-        *string = &string[string.len()..];
-        Ok(())
+        write_str_simd_rust(self.get_writer(), string)
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -420,11 +418,21 @@ where
         write_str_simd_sse42(writer, string)
     } else {
         #[cfg(not(feature = "portable"))]
-        return write_string_rust(writer, string);
+        return write_str_simd_rust(writer, string);
         #[cfg(feature = "portable")]
         return write_str_simd_portable(writer, string);
     }
 }
+#[inline]
+fn write_str_simd_rust<W>(writer: &mut W, string: &mut &[u8]) -> io::Result<()>
+where
+    W: Write,
+{
+    write_string_rust(writer, string)?;
+    *string = &string[string.len()..];
+    Ok(())
+}
+
 #[inline]
 fn write_string_container<W>(writer: &mut W, string: &[u8], mut start: usize) -> io::Result<()>
 where
@@ -893,5 +901,14 @@ mod tests {
         let mut string = "Hello, \"World!\"".as_bytes();
         super::write_string_rust(&mut writer, &mut string).expect("failed to write string");
         assert_eq!(writer, "Hello, \\\"World!\\\"".as_bytes());
+    }
+    #[test]
+    fn test_write_str_simd_rust_consumes_string() {
+        let mut writer = Vec::new();
+        let mut string = "Hello, \"World!\"".as_bytes();
+        super::write_str_simd_rust(&mut writer, &mut string).expect("failed to write string");
+        super::write_string_rust(&mut writer, &mut string).expect("failed to write string");
+        assert_eq!(writer, "Hello, \\\"World!\\\"".as_bytes());
+        assert!(string.is_empty());
     }
 }
