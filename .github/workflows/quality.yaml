@@ -46,6 +46,37 @@ jobs:
         env:
           RUSTFLAGS: ${{ matrix.rustflags.flags }}
         run: cargo clippy --all --features ${{ matrix.features }}
+
+  miri:
+    strategy:
+      matrix:
+        rustflags:
+          - flags: "-C target-cpu=native"
+            name: "avx2"
+          - flags: "-C target-feature=-avx2"
+            name: "sse"
+          - flags: "-C target-feature=-avx2,-sse4.2"
+            name: "compat"
+        features:
+          - "128bit"
+          - "custom-types"
+          - "c-abi"
+          - "hashbrown"
+          - "halfbrown"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: miri
+      - name: Run miri tests
+        env:
+          RUSTFLAGS: ${{ matrix.rustflags.flags }}
+        run: cargo miri test --features ${{ matrix.features }}
+
   coverage:
     strategy:
       matrix:
