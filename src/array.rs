@@ -123,7 +123,7 @@ mod cabi {
     impl<T> Array for RVec<T> {
         type Element = T;
 
-        fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = &T> + 'i> {
+        fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = &'i T> + 'i> {
             Box::new(<[T]>::iter(self))
         }
 

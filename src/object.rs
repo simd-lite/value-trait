@@ -319,17 +319,17 @@ where
     }
 
     #[inline]
-    fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + 'i> {
+    fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = (&'i Self::Key, &'i Self::Element)> + 'i> {
         Box::new(Hashbrown::iter(self))
     }
 
     #[inline]
-    fn keys<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Key> + 'i> {
+    fn keys<'i>(&'i self) -> Box<dyn Iterator<Item = &'i Self::Key> + 'i> {
         Box::new(Hashbrown::keys(self))
     }
 
     #[inline]
-    fn values<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Element> + 'i> {
+    fn values<'i>(&'i self) -> Box<dyn Iterator<Item = &'i Self::Element> + 'i> {
         Box::new(Hashbrown::values(self))
     }
 
@@ -394,17 +394,17 @@ where
     }
 
     #[inline]
-    fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = (&Self::Key, &Self::Element)> + 'i> {
+    fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = (&'i Self::Key, &'i Self::Element)> + 'i> {
         Box::new(abi_stable::std_types::RHashMap::iter(self).map(Into::into))
     }
 
     #[inline]
-    fn keys<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Key> + 'i> {
+    fn keys<'i>(&'i self) -> Box<dyn Iterator<Item = &'i Self::Key> + 'i> {
         Box::new(abi_stable::std_types::RHashMap::keys(self))
     }
 
     #[inline]
-    fn values<'i>(&'i self) -> Box<dyn Iterator<Item = &Self::Element> + 'i> {
+    fn values<'i>(&'i self) -> Box<dyn Iterator<Item = &'i Self::Element> + 'i> {
         Box::new(abi_stable::std_types::RHashMap::values(self))
     }
 

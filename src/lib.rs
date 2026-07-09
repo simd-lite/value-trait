@@ -73,7 +73,7 @@ impl fmt::Display for AccessError {
 impl std::error::Error for AccessError {}
 
 /// Extended types that have no native representation in JSON
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ExtendedValueType {
     /// A 32 bit signed integer value
     I32,
@@ -94,13 +94,8 @@ pub enum ExtendedValueType {
     /// A single utf-8 character
     Char,
     /// Not a value at all
+    #[default]
     None,
-}
-
-impl Default for ExtendedValueType {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 impl fmt::Display for ExtendedValueType {
@@ -121,9 +116,10 @@ impl fmt::Display for ExtendedValueType {
 }
 
 /// Types of JSON values
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Default)]
 pub enum ValueType {
     /// null
+    #[default]
     Null,
     /// a boolean
     Bool,
@@ -166,12 +162,6 @@ impl fmt::Display for ValueType {
             #[cfg(feature = "custom-types")]
             Self::Custom(name) => write!(f, "{name}"),
         }
-    }
-}
-
-impl Default for ValueType {
-    fn default() -> Self {
-        Self::Null
     }
 }
 

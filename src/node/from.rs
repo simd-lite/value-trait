@@ -50,7 +50,6 @@ impl From<i64> for StaticNode {
 #[cfg(feature = "128bit")]
 impl From<i128> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(i: i128) -> Self {
         Self::I128(i)
     }
@@ -88,7 +87,6 @@ impl From<u64> for StaticNode {
 #[cfg(feature = "128bit")]
 impl From<u128> for StaticNode {
     #[inline]
-    #[must_use]
     fn from(i: u128) -> Self {
         Self::U128(i)
     }

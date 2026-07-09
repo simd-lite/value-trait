@@ -14,7 +14,7 @@ mod cmp;
 mod from;
 
 /// Static tape node
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 #[cfg_attr(feature = "ordered-float", derive(Eq))]
 #[cfg_attr(feature = "c-abi", repr(C))]
 #[cfg_attr(feature = "c-abi", derive(abi_stable::StableAbi))]
@@ -38,6 +38,7 @@ pub enum StaticNode {
     /// A boolean value
     Bool(bool),
     /// The null value
+    #[default]
     Null,
 }
 
@@ -128,7 +129,6 @@ impl ValueAsScalar for StaticNode {
 
     #[cfg(feature = "128bit")]
     #[inline]
-    #[must_use]
     fn as_i64(&self) -> Option<i64> {
         match self {
             Self::I64(i) => Some(*i),
@@ -141,7 +141,6 @@ impl ValueAsScalar for StaticNode {
 
     #[cfg(feature = "128bit")]
     #[inline]
-    #[must_use]
     fn as_i128(&self) -> Option<i128> {
         match self {
             Self::I128(i) => Some(*i),
@@ -164,7 +163,6 @@ impl ValueAsScalar for StaticNode {
 
     #[cfg(feature = "128bit")]
     #[inline]
-    #[must_use]
     fn as_u64(&self) -> Option<u64> {
         match self {
             Self::I64(i) => u64::try_from(*i).ok(),
@@ -176,7 +174,6 @@ impl ValueAsScalar for StaticNode {
     }
     #[cfg(feature = "128bit")]
     #[inline]
-    #[must_use]
     fn as_u128(&self) -> Option<u128> {
         match self {
             Self::U128(i) => Some(*i),
@@ -283,7 +280,6 @@ impl PartialEq for StaticNode {
 
     #[cfg(feature = "128bit")]
     #[inline]
-    #[must_use]
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Null, Self::Null) => true,
@@ -314,11 +310,5 @@ impl PartialEq for StaticNode {
             (Self::I128(v1), Self::I64(v2)) => v1.eq(&i128::from(*v2)),
             _ => false,
         }
-    }
-}
-
-impl Default for StaticNode {
-    fn default() -> Self {
-        Self::Null
     }
 }
