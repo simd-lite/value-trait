@@ -1,6 +1,6 @@
 [package]
 name = "value-trait"
-version = "0.12.1"
+version = "0.12.2"
 authors = ["Heinz N. Gies <heinz@licenser.net>"]
 edition = "2024"
 license = "Apache-2.0/MIT"
