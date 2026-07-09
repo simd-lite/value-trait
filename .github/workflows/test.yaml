@@ -1,0 +1,90 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test-arm64:
+    runs-on: ubuntu-24.04-arm
+    env:
+      RUSTFLAGS: "-C target-cpu=native"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - name: Build
+        run: cargo build --verbose
+      - name: Test
+        run: cargo test --verbose --all
+
+  miri:
+    strategy:
+      matrix:
+        rustflags:
+          - flags: "-C target-cpu=native"
+            name: "avx2"
+          - flags: "-C target-feature=-avx2"
+            name: "sse"
+          - flags: "-C target-feature=-avx2,-sse4.2"
+            name: "compat"
+        features:
+          - "128bit"
+          - "custom-types"
+          - "c-abi"
+          - "hashbrown"
+          - "halfbrown"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: miri
+      - name: Run miri tests
+        env:
+          RUSTFLAGS: ${{ matrix.rustflags.flags }}
+        run: cargo miri test --features ${{ matrix.features }}
+
+  coverage:
+    strategy:
+      matrix:
+        rustflags:
+          - flags: "-C target-cpu=native"
+            name: "avx2"
+          - flags: "-C target-feature=-avx2"
+            name: "sse"
+          - flags: "-C target-feature=-avx2,-sse4.2"
+            name: "compat"
+        features:
+          - "128bit"
+          - "custom-types"
+          - "c-abi"
+          - "hashbrown"
+          - "halfbrown"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: "1.85.0"
+          override: true
+          components: llvm-tools-preview
+      - name: Install cargo-llcm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Generate code coverage
+        env:
+          RUSTFLAGS: ${{ matrix.rustflags.flags }}
+          PROPTEST_CASES: 512
+        run: cargo llvm-cov --lcov --output-path lcov.txt --features ${{ matrix.features }}
+      - uses: codecov/codecov-action@v3
+        with:
+          # token: ${{secrets.CODECOV_TOKEN}} # not required, we are a public repo
+          file: ./lcov.txt
+          flags: "${{ matrix.features }}-${{ matrix.rustflags.name }}"
+          fail_ci_if_error: ${{ github.event_name == 'pull_request' }}
+          verbose: true
