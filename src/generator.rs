@@ -4,18 +4,9 @@
 //
 // https://github.com/maciejhirsz/json-rust/blob/master/src/codegen.rs
 
-macro_rules! stry {
-    ($e:expr) => {
-        match $e {
-            ::std::result::Result::Ok(val) => val,
-            ::std::result::Result::Err(err) => return ::std::result::Result::Err(err),
-        }
-    };
-}
-
-use std::io;
-use std::io::Write;
-use std::ptr;
+use alloc::string::String;
+use alloc::vec::Vec;
+use crate::{IoResult, BufferWriter};
 
 const QU: u8 = b'"';
 const BS: u8 = b'\\';
@@ -51,9 +42,9 @@ pub(crate) static ESCAPED: [u8; 256] = [
 // taken from https://github.com/serde-rs/json/blob/4354fc3eb2232ee0ba9a9a23acce107a980a6dc0/src/ser.rs#L1790
 // This is called rarely
 #[inline(never)]
-fn u_encode<W>(w: &mut W, byte: u8) -> io::Result<()>
+fn u_encode<W>(w: &mut W, byte: u8) -> IoResult<()>
 where
-    W: Write,
+    W: BufferWriter,
 {
     static HEX_DIGITS: [u8; 16] = *b"0123456789abcdef";
     let bytes = [
@@ -70,7 +61,7 @@ where
 /// Base generator trait
 pub trait BaseGenerator {
     /// The writer
-    type T: Write;
+    type T : BufferWriter;
 
     /// returns the writer
     fn get_writer(&mut self) -> &mut Self::T;
@@ -79,7 +70,7 @@ pub trait BaseGenerator {
     /// # Errors
     /// if the write fails
     #[inline]
-    fn write(&mut self, slice: &[u8]) -> io::Result<()> {
+    fn write(&mut self, slice: &[u8]) -> IoResult {
         self.get_writer().write_all(slice)
     }
 
@@ -87,20 +78,20 @@ pub trait BaseGenerator {
     /// # Errors
     /// if the write fails
     #[inline]
-    fn write_char(&mut self, ch: u8) -> io::Result<()> {
+    fn write_char(&mut self, ch: u8) -> IoResult {
         self.get_writer().write_all(&[ch])
     }
 
     /// write with minimum
     /// # Errors
     /// if the write fails
-    fn write_min(&mut self, slice: &[u8], min: u8) -> io::Result<()>;
+    fn write_min(&mut self, slice: &[u8], min: u8) -> IoResult;
 
     /// writes new line
     /// # Errors
     /// if the write fails
     #[inline]
-    fn new_line(&mut self) -> io::Result<()> {
+    fn new_line(&mut self) -> IoResult<()> {
         Ok(())
     }
 
@@ -116,9 +107,9 @@ pub trait BaseGenerator {
     /// # Errors
     /// if the write fails
     #[inline]
-    fn write_string(&mut self, string: &str) -> io::Result<()> {
-        stry!(self.write_char(b'"'));
-        stry!(self.write_string_content(string));
+    fn write_string(&mut self, string: &str) -> IoResult<()> {
+        self.write_char(b'"')?;
+        self.write_string_content(string)?;
         self.write_char(b'"')
     }
 
@@ -126,14 +117,14 @@ pub trait BaseGenerator {
     /// # Errors
     /// if the write fails
     #[inline]
-    fn write_string_content(&mut self, string: &str) -> io::Result<()> {
+    fn write_string_content(&mut self, string: &str) -> IoResult {
         let mut string = string.as_bytes();
         unsafe {
             // Looking at the table above the lower 5 bits are entirely
             // quote characters that gives us a bitmask of 0x1f for that
             // region, only quote (`"`) and backslash (`\`) are not in
             // this range.
-            stry!(self.write_str_simd(&mut string));
+            self.write_str_simd(&mut string)?;
         }
         write_string_rust(self.get_writer(), &mut string)
     }
@@ -144,7 +135,7 @@ pub trait BaseGenerator {
     /// # Errors
     /// if the write fails
     #[inline]
-    fn write_simple_string(&mut self, string: &str) -> io::Result<()> {
+    fn write_simple_string(&mut self, string: &str) -> IoResult<()> {
         self.write(br#"""#)?;
         write_string_rust(self.get_writer(), &mut string.as_bytes())?;
         self.write(br#"""#)
@@ -155,7 +146,7 @@ pub trait BaseGenerator {
     /// # Errors
     /// if the write fails
     #[inline]
-    fn write_simple_str_content(&mut self, string: &str) -> io::Result<()> {
+    fn write_simple_str_content(&mut self, string: &str) -> IoResult<()> {
         let mut string = string.as_bytes();
         // Legacy code to handle the remainder of the code
         write_string_rust(self.get_writer(), &mut string)
@@ -165,7 +156,7 @@ pub trait BaseGenerator {
     /// # Errors
     /// if the write fails
     #[inline]
-    fn write_float(&mut self, num: f64) -> io::Result<()> {
+    fn write_float(&mut self, num: f64) -> IoResult<()> {
         let mut buffer = ryu::Buffer::new();
         let s = buffer.format_finite(num);
         self.get_writer().write_all(s.as_bytes())
@@ -175,7 +166,7 @@ pub trait BaseGenerator {
     /// # Errors
     /// if the write fails
     #[inline]
-    fn write_int<I: itoa::Integer>(&mut self, num: I) -> io::Result<()> {
+    fn write_int<I: itoa::Integer>(&mut self, num: I) -> IoResult<()> {
         let mut buffer = itoa::Buffer::new();
         let s = buffer.format(num);
         self.get_writer().write_all(s.as_bytes())
@@ -189,7 +180,7 @@ pub trait BaseGenerator {
         feature = "runtime-detection",
         any(target_arch = "x86_64", target_arch = "x86"),
     ))]
-    unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
+    unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> IoResult {
         unsafe { write_str_simd_fastest(self.get_writer(), string) }
     }
     #[cfg(all(target_feature = "avx2", not(feature = "runtime-detection")))]
@@ -199,7 +190,7 @@ pub trait BaseGenerator {
     /// This function is unsafe because it uses simd instructions
     /// # Errors
     ///  if the write fails
-    unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
+    unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> IoResult<()> {
         write_str_simd_avx2(self.get_writer(), string)
     }
 
@@ -214,7 +205,7 @@ pub trait BaseGenerator {
     /// This function is unsafe because it uses simd instructions
     /// # Errors
     ///  if the write fails
-    unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
+    unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> IoResult<()> {
         write_str_simd_sse2(self.get_writer(), string)
     }
 
@@ -235,7 +226,7 @@ pub trait BaseGenerator {
     /// This function is unsafe because it uses simd instructions
     /// # Errors
     ///  if the write fails
-    unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
+    unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> IoResult<()> {
         write_string_rust(self.get_writer(), string)
     }
 
@@ -246,7 +237,7 @@ pub trait BaseGenerator {
     /// This function is unsafe because it uses simd instructions
     /// # Errors
     ///  if the write fails
-    unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
+    unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> IoResult<()> {
         use std::arch::aarch64::{
             uint8x16_t, vandq_u8, vceqq_u8, vdupq_n_u8, veorq_u8, vgetq_lane_u16, vld1q_u8,
             vorrq_u8, vpaddq_u8, vreinterpretq_u16_u8,
@@ -326,7 +317,7 @@ pub trait BaseGenerator {
     /// This function is unsafe because it uses simd instructions
     /// # Errors
     ///  if the write fails
-    unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> io::Result<()> {
+    unsafe fn write_str_simd(&mut self, string: &mut &[u8]) -> IoResult<()> {
         let writer = self.get_writer();
         use std::arch::wasm32::{
             u8x16_bitmask, u8x16_eq, u8x16_splat, v128, v128_and, v128_load, v128_or, v128_xor,
@@ -375,15 +366,15 @@ pub trait BaseGenerator {
 }
 
 #[cfg(any(target_arch = "x86_64", target_arch = "x86"))]
-unsafe fn write_str_simd_fastest<W>(writer: &mut W, string: &mut &[u8]) -> io::Result<()>
+unsafe fn write_str_simd_fastest<W>(writer: &mut W, string: &mut &[u8]) -> IoResult<()>
 where
-    W: Write,
+    W: BufferWriter,
 {
     // This is not possible right now since we can't get `W` to be part of the static
     // use std::sync::atomic::{AtomicPtr, Ordering};
     // type FnRaw = *mut ();
 
-    // type WriteStrFn<T> = for<'a, 'b, 'c> unsafe fn(&'a mut T, &'b mut &'c [u8]) -> io::Result<()>;
+    // type WriteStrFn<T> = for<'a, 'b, 'c> unsafe fn(&'a mut T, &'b mut &'c [u8]) -> IoResult<()>;
     // static FN: AtomicPtr<()> = AtomicPtr::new(get_fastest::<W> as FnRaw);
     // #[inline]
     // fn get_fastest_available_implementation<W>() -> WriteStrFn<W>
@@ -400,7 +391,7 @@ where
     // }
 
     // #[inline]
-    // unsafe fn get_fastest<'invoke, 'de, W>(writer: &mut W, string: &mut &[u8]) -> io::Result<()>
+    // unsafe fn get_fastest<'invoke, 'de, W>(writer: &mut W, string: &mut &[u8]) -> IoResult<()>
     // where
     //     W: Write,
     //     'de: 'invoke,
@@ -412,9 +403,9 @@ where
     // let fun = FN.load(Ordering::Relaxed);
     // mem::transmute::<FnRaw, WriteStrFn>(fun)(writer, string)
 
-    if std::is_x86_feature_detected!("avx2") {
+    if core_detect::is_x86_feature_detected!("avx2") {
         unsafe { write_str_simd_avx2(writer, string) }
-    } else if std::is_x86_feature_detected!("sse2") {
+    } else if core_detect::is_x86_feature_detected!("sse2") {
         unsafe { write_str_simd_sse2(writer, string) }
     } else {
         #[cfg(not(feature = "portable"))]
@@ -424,20 +415,20 @@ where
     }
 }
 #[inline]
-fn write_string_container<W>(writer: &mut W, string: &[u8], mut start: usize) -> io::Result<()>
+fn write_string_container<W>(writer: &mut W, string: &[u8], mut start: usize) -> IoResult
 where
-    W: Write,
+    W: BufferWriter,
 {
-    stry!(writer.write_all(&string[..start]));
+    writer.write_all(&string[..start])?;
 
     for (index, ch) in string.iter().enumerate().skip(start) {
         let escape = ESCAPED[*ch as usize];
         if escape > 0 {
-            stry!(writer.write_all(&string[start..index]));
+            writer.write_all(&string[start..index])?;
             if escape == b'u' {
-                stry!(u_encode(writer, *ch));
+                u_encode(writer, *ch)?;
             } else {
-                stry!(writer.write_all(&[b'\\', escape]));
+                writer.write_all(&[b'\\', escape])?;
             }
             start = index + 1;
         }
@@ -446,9 +437,9 @@ where
 }
 
 #[inline]
-fn write_string_rust<W>(writer: &mut W, string: &mut &[u8]) -> io::Result<()>
+fn write_string_rust<W>(writer: &mut W, string: &mut &[u8]) -> IoResult<()>
 where
-    W: Write,
+    W: BufferWriter,
 {
     // Legacy code to handle the remainder of the code
     for (index, ch) in string.iter().enumerate() {
@@ -470,7 +461,7 @@ where
 /// This function is unsafe because it uses simd instructions
 /// # Errors
 ///  if the write fails
-unsafe fn write_str_simd_portable<W>(writer: &mut W, string: &mut &[u8]) -> io::Result<()>
+unsafe fn write_str_simd_portable<W>(writer: &mut W, string: &mut &[u8]) -> IoResult<()>
 where
     W: Write,
 {
@@ -523,17 +514,17 @@ where
 /// This function is unsafe because it uses simd instructions
 /// # Errors
 ///  if the write fails
-unsafe fn write_str_simd_avx2<W>(writer: &mut W, string: &mut &[u8]) -> io::Result<()>
+unsafe fn write_str_simd_avx2<W>(writer: &mut W, string: &mut &[u8]) -> IoResult<()>
 where
-    W: Write,
+    W: BufferWriter,
 {
     #[cfg(target_arch = "x86")]
-    use std::arch::x86::{
+    use core::arch::x86::{
         __m256i, _mm256_and_si256, _mm256_cmpeq_epi8, _mm256_loadu_si256, _mm256_movemask_epi8,
         _mm256_or_si256, _mm256_set1_epi8, _mm256_xor_si256,
     };
     #[cfg(target_arch = "x86_64")]
-    use std::arch::x86_64::{
+    use core::arch::x86_64::{
         __m256i, _mm256_and_si256, _mm256_cmpeq_epi8, _mm256_loadu_si256, _mm256_movemask_epi8,
         _mm256_or_si256, _mm256_set1_epi8, _mm256_xor_si256,
     };
@@ -567,19 +558,19 @@ where
                 idx += 32;
             } else {
                 let quote_dist = quote_bits.trailing_zeros() as usize;
-                stry!(writer.write_all(string.get_unchecked(0..idx + quote_dist)));
+                writer.write_all(string.get_unchecked(0..idx + quote_dist))?;
 
                 let ch = string[idx + quote_dist];
                 match ESCAPED[ch as usize] {
-                    b'u' => stry!(u_encode(writer, ch)),
-                    escape => stry!(writer.write_all(&[b'\\', escape])),
+                    b'u' => u_encode(writer, ch)?,
+                    escape => writer.write_all(&[b'\\', escape])?,
                 }
 
                 *string = string.get_unchecked(idx + quote_dist + 1..);
                 idx = 0;
             }
         }
-        stry!(writer.write_all(&string[0..idx]));
+        writer.write_all(&string[0..idx])?;
         *string = string.get_unchecked(idx..);
     }
 
@@ -594,17 +585,17 @@ where
 /// This function is unsafe because it uses simd instructions
 /// # Errors
 ///  if the write fails
-unsafe fn write_str_simd_sse2<W>(writer: &mut W, string: &mut &[u8]) -> io::Result<()>
+unsafe fn write_str_simd_sse2<W>(writer: &mut W, string: &mut &[u8]) -> IoResult<()>
 where
-    W: Write,
+    W: BufferWriter,
 {
     #[cfg(target_arch = "x86")]
-    use std::arch::x86::{
+    use core::arch::x86::{
         __m128i, _mm_and_si128, _mm_cmpeq_epi8, _mm_loadu_si128, _mm_movemask_epi8, _mm_or_si128,
         _mm_set1_epi8, _mm_xor_si128,
     };
     #[cfg(target_arch = "x86_64")]
-    use std::arch::x86_64::{
+    use core::arch::x86_64::{
         __m128i, _mm_and_si128, _mm_cmpeq_epi8, _mm_loadu_si128, _mm_movemask_epi8, _mm_or_si128,
         _mm_set1_epi8, _mm_xor_si128,
     };
@@ -636,19 +627,19 @@ where
                 idx += 16;
             } else {
                 let quote_dist = quote_bits.trailing_zeros() as usize;
-                stry!(writer.write_all(&string[0..idx + quote_dist]));
+                writer.write_all(&string[0..idx + quote_dist])?;
 
                 let ch = string[idx + quote_dist];
                 match ESCAPED[ch as usize] {
-                    b'u' => stry!(u_encode(writer, ch)),
-                    escape => stry!(writer.write_all(&[b'\\', escape])),
+                    b'u' => u_encode(writer, ch)?,
+                    escape => writer.write_all(&[b'\\', escape])?,
                 }
 
                 *string = &string[idx + quote_dist + 1..];
                 idx = 0;
             }
         }
-        stry!(writer.write_all(&string[0..idx]));
+        writer.write_all(&string[0..idx])?;
         *string = &string[idx..];
     }
 
@@ -688,12 +679,12 @@ impl BaseGenerator for DumpGenerator {
     type T = Vec<u8>;
 
     #[inline]
-    fn write(&mut self, slice: &[u8]) -> io::Result<()> {
+    fn write(&mut self, slice: &[u8]) -> IoResult<()> {
         extend_from_slice(&mut self.code, slice);
         Ok(())
     }
     #[inline]
-    fn write_char(&mut self, ch: u8) -> io::Result<()> {
+    fn write_char(&mut self, ch: u8) -> IoResult<()> {
         self.code.push(ch);
         Ok(())
     }
@@ -704,7 +695,7 @@ impl BaseGenerator for DumpGenerator {
     }
 
     #[inline]
-    fn write_min(&mut self, _: &[u8], min: u8) -> io::Result<()> {
+    fn write_min(&mut self, _: &[u8], min: u8) -> IoResult<()> {
         self.code.push(min);
         Ok(())
     }
@@ -738,13 +729,13 @@ impl PrettyGenerator {
 impl BaseGenerator for PrettyGenerator {
     type T = Vec<u8>;
     #[inline]
-    fn write(&mut self, slice: &[u8]) -> io::Result<()> {
+    fn write(&mut self, slice: &[u8]) -> IoResult<()> {
         extend_from_slice(&mut self.code, slice);
         Ok(())
     }
 
     #[inline]
-    fn write_char(&mut self, ch: u8) -> io::Result<()> {
+    fn write_char(&mut self, ch: u8) -> IoResult<()> {
         self.code.push(ch);
         Ok(())
     }
@@ -755,12 +746,12 @@ impl BaseGenerator for PrettyGenerator {
     }
 
     #[inline]
-    fn write_min(&mut self, slice: &[u8], _: u8) -> io::Result<()> {
+    fn write_min(&mut self, slice: &[u8], _: u8) -> IoResult<()> {
         extend_from_slice(&mut self.code, slice);
         Ok(())
     }
 
-    fn new_line(&mut self) -> io::Result<()> {
+    fn new_line(&mut self) -> IoResult<()> {
         self.code.push(b'\n');
         self.code.resize(
             self.code.len() + (self.dent * self.spaces_per_indent) as usize,
@@ -779,13 +770,13 @@ impl BaseGenerator for PrettyGenerator {
 }
 
 /// Writer Generator
-pub struct WriterGenerator<'w, W: 'w + Write> {
+pub struct WriterGenerator<'w, W: 'w + BufferWriter> {
     writer: &'w mut W,
 }
 
 impl<'w, W> WriterGenerator<'w, W>
 where
-    W: 'w + Write,
+    W: 'w + BufferWriter,
 {
     /// Creates a new generator
     pub fn new(writer: &'w mut W) -> Self {
@@ -795,7 +786,7 @@ where
 
 impl<W> BaseGenerator for WriterGenerator<'_, W>
 where
-    W: Write,
+    W: BufferWriter,
 {
     type T = W;
 
@@ -805,7 +796,7 @@ where
     }
 
     #[inline]
-    fn write_min(&mut self, _: &[u8], min: u8) -> io::Result<()> {
+    fn write_min(&mut self, _: &[u8], min: u8) -> IoResult {
         self.writer.write_all(&[min])
     }
 }
@@ -813,7 +804,7 @@ where
 /// Pretty Writer Generator
 pub struct PrettyWriterGenerator<'w, W>
 where
-    W: 'w + Write,
+    W: 'w + BufferWriter,
 {
     writer: &'w mut W,
     dent: u16,
@@ -822,7 +813,7 @@ where
 
 impl<'w, W> PrettyWriterGenerator<'w, W>
 where
-    W: 'w + Write,
+    W: 'w + BufferWriter,
 {
     /// Creates a new generator
     pub fn new(writer: &'w mut W, spaces_per_indent: u16) -> Self {
@@ -836,7 +827,7 @@ where
 
 impl<W> BaseGenerator for PrettyWriterGenerator<'_, W>
 where
-    W: Write,
+    W: BufferWriter,
 {
     type T = W;
 
@@ -846,14 +837,14 @@ where
     }
 
     #[inline]
-    fn write_min(&mut self, slice: &[u8], _: u8) -> io::Result<()> {
+    fn write_min(&mut self, slice: &[u8], _: u8) -> IoResult<()> {
         self.writer.write_all(slice)
     }
 
-    fn new_line(&mut self) -> io::Result<()> {
-        stry!(self.write_char(b'\n'));
+    fn new_line(&mut self) -> IoResult<()> {
+        self.write_char(b'\n')?;
         for _ in 0..(self.dent * self.spaces_per_indent) {
-            stry!(self.write_char(b' '));
+            self.write_char(b' ')?;
         }
         Ok(())
     }
@@ -880,13 +871,14 @@ pub(crate) fn extend_from_slice(dst: &mut Vec<u8>, src: &[u8]) {
 
     unsafe {
         // We would have failed if `reserve` overflowed\
-        ptr::copy_nonoverlapping(src.as_ptr(), dst.as_mut_ptr().add(dst_len), src_len);
+        core::ptr::copy_nonoverlapping(src.as_ptr(), dst.as_mut_ptr().add(dst_len), src_len);
         dst.set_len(dst_len + src_len);
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use alloc::vec::Vec;
 
     #[test]
     fn test_write_string_rust() {

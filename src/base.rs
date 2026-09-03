@@ -1,6 +1,8 @@
-use std::io::{self, Write};
+use crate::io::{Write};
 
-use crate::{TryTypeError, ValueType, array::Array, object::Object};
+use alloc::string::String;
+
+use crate::{array::Array, object::Object, IoResult, TryTypeError, ValueType};
 
 /// Type information on a value
 pub trait TypedValue {
@@ -244,7 +246,7 @@ pub trait Writable {
     /// # Errors
     ///
     /// Will return `Err` if an IO error is encountered
-    fn write<'writer, W>(&self, w: &mut W) -> io::Result<()>
+    fn write<'writer, W>(&self, w: &mut W) -> IoResult<()>
     where
         W: 'writer + Write;
 
@@ -253,7 +255,7 @@ pub trait Writable {
     /// # Errors
     ///
     /// Will return `Err` if an IO error is encountered.
-    fn write_pp<'writer, W>(&self, w: &mut W) -> io::Result<()>
+    fn write_pp<'writer, W>(&self, w: &mut W) -> IoResult<()>
     where
         W: 'writer + Write;
 }

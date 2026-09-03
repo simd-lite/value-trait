@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std)]
 //! A crate providing generalised value traits for working with
 //! `JSONesque` values.
 #![warn(unused_extern_crates)]
@@ -6,11 +7,21 @@
     clippy::all,
     clippy::unwrap_used,
     clippy::unnecessary_unwrap,
-    clippy::pedantic,
     missing_docs
 )]
 // We might want to revisit inline_always
 #![allow(clippy::module_name_repetitions)]
+
+extern crate alloc;
+
+#[cfg(not(feature = "std"))]
+pub(crate) use hashbrown::HashMap;
+#[cfg(feature = "std")]
+pub(crate) use std::collections::HashMap;
+
+use alloc::borrow::Cow;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 #[cfg(all(feature = "128bit", feature = "c-abi"))]
 compile_error!(
@@ -28,8 +39,7 @@ compile_error!(
     "Combining the features `c-abi` and `ordered-float` is impossible because ordered_float::OrderedFloat does not implement `StableAbi`"
 );
 
-use std::borrow::Cow;
-use std::fmt;
+use core::fmt;
 
 mod array;
 /// Traits for serializing JSON
@@ -70,7 +80,97 @@ impl fmt::Display for AccessError {
         }
     }
 }
-impl std::error::Error for AccessError {}
+
+#[cfg(feature = "std")]
+use std::error;
+#[cfg(not(feature = "std"))]
+use core::error;
+use core::fmt::{Display, Error, Formatter};
+use core::str::Utf8Error;
+#[cfg(feature = "std")]
+use std::io;
+#[cfg(not(feature = "std"))]
+use embedded_io as io;
+
+#[cfg(feature = "std")]
+use std::is_x86_feature_detected;
+
+use embedded_io::ErrorKind;
+
+#[doc(hidden)]
+pub type IoResult<T = ()> = Result<T, IoError>;
+
+/// Represents I/O-related errors that can occur during operations.
+///
+/// This enum categorizes different types of I/O errors that may arise, such as
+/// formatting issues or invalid UTF-8 input.
+#[derive(Debug, )]
+pub enum IoError {
+    /// Formatting error.
+    Formatting,
+    /// Passed string was non-valid UTF-8.
+    InvalidUtf8,
+}
+
+impl error::Error  for IoError {}
+impl io::Error  for IoError {
+    fn kind(&self) -> ErrorKind {
+        match self {
+            IoError::Formatting => ErrorKind::Other,
+            IoError::InvalidUtf8 => ErrorKind::InvalidData,
+        }
+    }
+}
+
+impl From<Error> for IoError  {
+    fn from(_value: Error) -> Self {
+        IoError::Formatting
+    }
+}
+
+impl From<Utf8Error> for IoError  {
+    fn from(_value: Utf8Error) -> Self {
+        IoError::InvalidUtf8
+    }
+}
+
+impl Display for IoError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_str("An I/O error occurred")
+    }
+}
+
+/// A trait for objects which are byte-oriented sinks.
+///
+/// Implementors of the `Write` trait are sometimes called 'writers'.
+///
+/// Writers are defined by a required method, [`write_all`]:
+///
+pub trait BufferWriter {
+    
+    /// Attempts to write an entire buffer into this writer.
+    ///
+    /// This method will continuously call write until 
+    /// there is no more data to be written or an error of 
+    /// non-[`ErrorKind::Interrupted`] kind is returned.
+    /// This method will not return until the entire buffer has been successfully 
+    /// written or such an error occurs. The first error that is not of [`ErrorKind::Interrupted`]
+    /// kind generated from this method will be returned.
+    /// 
+    /// # Errors
+    /// Will emit errors that occur during writing. For more information, see [`IoError`].
+    fn write_all(&mut self, ch: &[u8]) -> IoResult;
+}
+
+impl BufferWriter for Vec<u8> {
+    fn write_all(&mut self, ch: &[u8]) -> IoResult{
+        self.extend_from_slice(ch);
+        Ok(())
+    }
+}
+
+
+impl error::Error for AccessError {}
 
 /// Extended types that have no native representation in JSON
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -213,13 +313,13 @@ pub struct TryTypeError {
     pub got: ValueType,
 }
 
-impl std::fmt::Display for TryTypeError {
+impl fmt::Display for TryTypeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Expected type {}, got {}", self.expected, self.got)
     }
 }
 
-impl std::error::Error for TryTypeError {}
+impl error::Error for TryTypeError {}
 
 // /// The `Value` exposes common interface for values, this allows using both/// `BorrowedValue` and `OwnedValue` nearly interchangeable
 // pub trait Value:

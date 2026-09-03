@@ -1,12 +1,12 @@
+use alloc::boxed::Box;
+use core::borrow::Borrow;
+use core::hash::{BuildHasher, Hash};
 #[cfg(feature = "halfbrown")]
 use halfbrown::HashMap as Halfbrown;
-#[cfg(feature = "hashbrown")]
-use hashbrown::HashMap as Hashbrown;
 #[cfg(feature = "indexmap")]
 use indexmap::IndexMap;
-use std::collections::HashMap;
-use std::hash::Hash;
-use std::{borrow::Borrow, hash::BuildHasher};
+
+use crate::HashMap;
 
 /// A trait for the minimal common functionality of a vale object
 pub trait Object {
@@ -301,79 +301,6 @@ where
     }
 }
 
-#[cfg(feature = "hashbrown")]
-impl<MapK, MapE, S: BuildHasher> Object for Hashbrown<MapK, MapE, S>
-where
-    MapK: Hash + Eq,
-{
-    type Key = MapK;
-    type Element = MapE;
-
-    #[inline]
-    fn get<Q>(&self, k: &Q) -> Option<&Self::Element>
-    where
-        Self::Key: Borrow<Q>,
-        Q: ?Sized + Hash + Eq + Ord,
-    {
-        Hashbrown::get(self, k)
-    }
-
-    #[inline]
-    fn iter<'i>(&'i self) -> Box<dyn Iterator<Item = (&'i Self::Key, &'i Self::Element)> + 'i> {
-        Box::new(Hashbrown::iter(self))
-    }
-
-    #[inline]
-    fn keys<'i>(&'i self) -> Box<dyn Iterator<Item = &'i Self::Key> + 'i> {
-        Box::new(Hashbrown::keys(self))
-    }
-
-    #[inline]
-    fn values<'i>(&'i self) -> Box<dyn Iterator<Item = &'i Self::Element> + 'i> {
-        Box::new(Hashbrown::values(self))
-    }
-
-    #[inline]
-    fn len(&self) -> usize {
-        Hashbrown::len(self)
-    }
-}
-#[cfg(feature = "hashbrown")]
-impl<MapK, MapE, S: BuildHasher> ObjectMut for Hashbrown<MapK, MapE, S>
-where
-    MapK: Hash + Eq,
-{
-    type Key = MapK;
-    type Element = MapE;
-
-    #[inline]
-    fn get_mut<Q>(&mut self, k: &Q) -> Option<&mut Self::Element>
-    where
-        Self::Key: Borrow<Q>,
-        Q: ?Sized + Hash + Eq + Ord,
-    {
-        Hashbrown::get_mut(self, k)
-    }
-
-    #[inline]
-    fn insert<K, V>(&mut self, k: K, v: V) -> Option<Self::Element>
-    where
-        K: Into<Self::Key>,
-        V: Into<Self::Element>,
-        Self::Key: Hash + Eq,
-    {
-        Hashbrown::insert(self, k.into(), v.into())
-    }
-
-    #[inline]
-    fn remove<Q>(&mut self, k: &Q) -> Option<Self::Element>
-    where
-        Self::Key: Borrow<Q>,
-        Q: ?Sized + Hash + Eq + Ord,
-    {
-        Hashbrown::remove(self, k)
-    }
-}
 
 #[cfg(feature = "c-abi")]
 impl<MapK, MapE, S: ::std::hash::BuildHasher> Object
