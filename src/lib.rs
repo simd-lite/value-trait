@@ -7,7 +7,6 @@
     clippy::all,
     clippy::unwrap_used,
     clippy::unnecessary_unwrap,
-    clippy::pedantic,
     missing_docs
 )]
 // We might want to revisit inline_always
@@ -86,7 +85,7 @@ impl fmt::Display for AccessError {
 use std::error;
 #[cfg(not(feature = "std"))]
 use core::error;
-use core::fmt::{Display, Error, Formatter, Write};
+use core::fmt::{Display, Error, Formatter};
 use core::str::Utf8Error;
 #[cfg(feature = "std")]
 use std::io;
@@ -95,8 +94,7 @@ use embedded_io as io;
 
 #[cfg(feature = "std")]
 use std::is_x86_feature_detected;
-#[cfg(not(feature = "std"))]
-use core_detect::is_x86_feature_detected;
+
 use embedded_io::ErrorKind;
 
 #[doc(hidden)]
@@ -158,6 +156,9 @@ pub trait BufferWriter {
     /// This method will not return until the entire buffer has been successfully 
     /// written or such an error occurs. The first error that is not of [`ErrorKind::Interrupted`]
     /// kind generated from this method will be returned.
+    /// 
+    /// # Errors
+    /// Will emit errors that occur during writing. For more information, see [`IoError`].
     fn write_all(&mut self, ch: &[u8]) -> IoResult;
 }
 
