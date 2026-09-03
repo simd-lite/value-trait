@@ -22,6 +22,7 @@ pub(crate) use std::collections::HashMap;
 
 use alloc::borrow::Cow;
 use alloc::string::String;
+use alloc::vec::Vec;
 
 #[cfg(all(feature = "128bit", feature = "c-abi"))]
 compile_error!(
@@ -85,7 +86,7 @@ impl fmt::Display for AccessError {
 use std::error;
 #[cfg(not(feature = "std"))]
 use core::error;
-use core::fmt::{Display, Error, Formatter};
+use core::fmt::{Display, Error, Formatter, Write};
 use core::str::Utf8Error;
 #[cfg(feature = "std")]
 use std::io;
@@ -98,11 +99,18 @@ use std::is_x86_feature_detected;
 use core_detect::is_x86_feature_detected;
 use embedded_io::ErrorKind;
 
-pub type IoResult<T> = Result<T, IoError>;
+#[doc(hidden)]
+pub type IoResult<T = ()> = Result<T, IoError>;
 
+/// Represents I/O-related errors that can occur during operations.
+///
+/// This enum categorizes different types of I/O errors that may arise, such as
+/// formatting issues or invalid UTF-8 input.
 #[derive(Debug, )]
 pub enum IoError {
+    /// Formatting error.
     Formatting,
+    /// Passed string was non-valid UTF-8.
     InvalidUtf8,
 }
 
@@ -133,6 +141,33 @@ impl Display for IoError {
         f.write_str("An I/O error occurred")
     }
 }
+
+/// A trait for objects which are byte-oriented sinks.
+///
+/// Implementors of the `Write` trait are sometimes called 'writers'.
+///
+/// Writers are defined by a required method, [`write_all`]:
+///
+pub trait BufferWriter {
+    
+    /// Attempts to write an entire buffer into this writer.
+    ///
+    /// This method will continuously call write until 
+    /// there is no more data to be written or an error of 
+    /// non-[`ErrorKind::Interrupted`] kind is returned.
+    /// This method will not return until the entire buffer has been successfully 
+    /// written or such an error occurs. The first error that is not of [`ErrorKind::Interrupted`]
+    /// kind generated from this method will be returned.
+    fn write_all(&mut self, ch: &[u8]) -> IoResult;
+}
+
+impl BufferWriter for Vec<u8> {
+    fn write_all(&mut self, ch: &[u8]) -> IoResult{
+        self.extend_from_slice(ch);
+        Ok(())
+    }
+}
+
 
 impl error::Error for AccessError {}
 
