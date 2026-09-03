@@ -1,5 +1,5 @@
-use std::{borrow::Borrow, hash::Hash};
-
+use core::borrow::Borrow;
+use core::hash::Hash;
 use crate::{
     AccessError, ExtendedValueType, TryTypeError, ValueType,
     array::{self, ArrayMut, Indexed, IndexedMut},
@@ -860,7 +860,7 @@ where
     type Object = T::Object;
 
     #[inline]
-    fn insert<K, V>(&mut self, k: K, v: V) -> std::result::Result<Option<Self::Target>, AccessError>
+    fn insert<K, V>(&mut self, k: K, v: V) -> Result<Option<Self::Target>, AccessError>
     where
         Self::Key: From<K> + Hash + Eq,
         V: Into<Self::Target>,
@@ -871,7 +871,7 @@ where
     }
 
     #[inline]
-    fn remove<Q>(&mut self, k: &Q) -> std::result::Result<Option<Self::Target>, AccessError>
+    fn remove<Q>(&mut self, k: &Q) -> Result<Option<Self::Target>, AccessError>
     where
         Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord,
@@ -898,7 +898,7 @@ where
     type Target = <T::Array as ArrayMut>::Element;
 
     #[inline]
-    fn push<V>(&mut self, v: V) -> std::result::Result<(), AccessError>
+    fn push<V>(&mut self, v: V) -> Result<(), AccessError>
     where
         V: Into<Self::Target>,
     {
@@ -915,7 +915,7 @@ where
     ///
     /// Will return `Err` if `self` is not an array.
     #[inline]
-    fn pop(&mut self) -> std::result::Result<Option<Self::Target>, AccessError> {
+    fn pop(&mut self) -> Result<Option<Self::Target>, AccessError> {
         self.as_array_mut()
             .ok_or(AccessError::NotAnArray)
             .map(ArrayMut::pop)

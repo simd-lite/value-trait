@@ -1,8 +1,8 @@
 use crate::base::{TypedValue, ValueAsScalar};
 
 use super::{ValueType, fmt};
-use std::convert::TryFrom;
-use std::ops::{Index, IndexMut};
+use core::convert::TryFrom;
+use core::ops::{Index, IndexMut};
 
 #[cfg(feature = "ordered-float")]
 use ordered_float::OrderedFloat;

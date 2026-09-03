@@ -1,5 +1,5 @@
-use std::{borrow::Borrow, hash::Hash};
-
+use core::borrow::Borrow;
+use core::hash::Hash;
 use crate::{AccessError, TryTypeError, array::Array, object::Object};
 
 /// `try_as_*` access to scalar value types
@@ -99,7 +99,7 @@ pub trait TypedScalarValue {
     #[must_use]
     fn is_float(&self) -> bool;
 
-    /// returns true if the current value a integer number
+    /// returns true if the current value an integer number
     #[must_use]
     fn is_integer(&self) -> bool;
 
@@ -559,7 +559,7 @@ pub trait MutableObject {
         &mut self,
         k: K,
         v: V,
-    ) -> std::result::Result<Option<Self::Target>, AccessError>
+    ) -> Result<Option<Self::Target>, AccessError>
     where
         Self::Key: From<K> + Hash + Eq,
         V: Into<Self::Target>;
@@ -583,7 +583,7 @@ pub trait MutableObject {
     /// # Errors
     ///
     /// Will return `Err` if `self` is not an Object.
-    fn remove<Q>(&mut self, k: &Q) -> std::result::Result<Option<Self::Target>, AccessError>
+    fn remove<Q>(&mut self, k: &Q) -> Result<Option<Self::Target>, AccessError>
     where
         Self::Key: Borrow<Q>,
         Q: ?Sized + Hash + Eq + Ord;
@@ -634,7 +634,7 @@ pub trait MutableArray {
     /// # Errors
     ///
     /// Will return `Err` if `self` is not an array.
-    fn push<V>(&mut self, v: V) -> std::result::Result<(), AccessError>
+    fn push<V>(&mut self, v: V) -> Result<(), AccessError>
     where
         V: Into<Self::Target>;
 
@@ -656,7 +656,7 @@ pub trait MutableArray {
     /// # Errors
     ///
     /// Will return `Err` if `self` is not an array.
-    fn pop(&mut self) -> std::result::Result<Option<Self::Target>, AccessError>;
+    fn pop(&mut self) -> Result<Option<Self::Target>, AccessError>;
 
     /// Tries to pop from a `Value` as an `Array`.
     /// if the `Value` is any other type `None` will

@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std)]
 //! A crate providing generalised value traits for working with
 //! `JSONesque` values.
 #![warn(unused_extern_crates)]
@@ -11,6 +12,16 @@
 )]
 // We might want to revisit inline_always
 #![allow(clippy::module_name_repetitions)]
+
+extern crate alloc;
+
+#[cfg(not(feature = "std"))]
+pub(crate) use hashbrown::HashMap;
+#[cfg(feature = "std")]
+pub(crate) use std::collections::HashMap;
+
+use alloc::borrow::Cow;
+use alloc::string::String;
 
 #[cfg(all(feature = "128bit", feature = "c-abi"))]
 compile_error!(
@@ -28,8 +39,7 @@ compile_error!(
     "Combining the features `c-abi` and `ordered-float` is impossible because ordered_float::OrderedFloat does not implement `StableAbi`"
 );
 
-use std::borrow::Cow;
-use std::fmt;
+use core::fmt;
 
 mod array;
 /// Traits for serializing JSON
@@ -70,7 +80,61 @@ impl fmt::Display for AccessError {
         }
     }
 }
-impl std::error::Error for AccessError {}
+
+#[cfg(feature = "std")]
+use std::error;
+#[cfg(not(feature = "std"))]
+use core::error;
+use core::fmt::{Display, Error, Formatter};
+use core::str::Utf8Error;
+#[cfg(feature = "std")]
+use std::io;
+#[cfg(not(feature = "std"))]
+use embedded_io as io;
+
+#[cfg(feature = "std")]
+use std::is_x86_feature_detected;
+#[cfg(not(feature = "std"))]
+use core_detect::is_x86_feature_detected;
+use embedded_io::ErrorKind;
+
+pub type IoResult<T> = Result<T, IoError>;
+
+#[derive(Debug, )]
+pub enum IoError {
+    Formatting,
+    InvalidUtf8,
+}
+
+impl error::Error  for IoError {}
+impl io::Error  for IoError {
+    fn kind(&self) -> ErrorKind {
+        match self {
+            IoError::Formatting => ErrorKind::Other,
+            IoError::InvalidUtf8 => ErrorKind::InvalidData,
+        }
+    }
+}
+
+impl From<Error> for IoError  {
+    fn from(_value: Error) -> Self {
+        IoError::Formatting
+    }
+}
+
+impl From<Utf8Error> for IoError  {
+    fn from(_value: Utf8Error) -> Self {
+        IoError::InvalidUtf8
+    }
+}
+
+impl Display for IoError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_str("An I/O error occurred")
+    }
+}
+
+impl error::Error for AccessError {}
 
 /// Extended types that have no native representation in JSON
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -213,13 +277,13 @@ pub struct TryTypeError {
     pub got: ValueType,
 }
 
-impl std::fmt::Display for TryTypeError {
+impl fmt::Display for TryTypeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Expected type {}, got {}", self.expected, self.got)
     }
 }
 
-impl std::error::Error for TryTypeError {}
+impl error::Error for TryTypeError {}
 
 // /// The `Value` exposes common interface for values, this allows using both/// `BorrowedValue` and `OwnedValue` nearly interchangeable
 // pub trait Value:

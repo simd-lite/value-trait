@@ -1,4 +1,6 @@
-use std::slice::SliceIndex;
+use alloc::boxed::Box;
+use alloc::vec::Vec;
+use core::slice::SliceIndex;
 
 /// Trait for indexing into an array
 pub trait Indexed<T> {

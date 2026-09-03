@@ -1,3 +1,4 @@
+use alloc::string::String;
 use crate::{base::ValueAsScalar, derived::TypedScalarValue};
 
 use super::StaticNode;
