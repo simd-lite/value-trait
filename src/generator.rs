@@ -166,6 +166,12 @@ pub trait BaseGenerator {
     /// if the write fails
     #[inline]
     fn write_float(&mut self, num: f64) -> io::Result<()> {
+        // JSON has no NaN or infinity, and `format_finite` gives an unspecified string for them
+        // (`2.696539702293474e308` for NaN, which reads back as infinity). Write `null`, as
+        // serde_json does.
+        if !num.is_finite() {
+            return self.get_writer().write_all(b"null");
+        }
         let mut buffer = ryu::Buffer::new();
         let s = buffer.format_finite(num);
         self.get_writer().write_all(s.as_bytes())
@@ -887,6 +893,25 @@ pub(crate) fn extend_from_slice(dst: &mut Vec<u8>, src: &[u8]) {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn test_write_float_non_finite() {
+        // NaN and infinity are not JSON numbers: they are written as `null` (as serde_json does),
+        // not as the unspecified output of `format_finite` (`2.696539702293474e308` for NaN).
+        use super::{BaseGenerator, DumpGenerator};
+        for (f, want) in [
+            (f64::NAN, "null"),
+            (f64::INFINITY, "null"),
+            (f64::NEG_INFINITY, "null"),
+            (1.5, "1.5"),
+            (-0.0, "-0.0"),
+            (f64::MAX, "1.7976931348623157e308"),
+        ] {
+            let mut g = DumpGenerator::new();
+            g.write_float(f).expect("write");
+            assert_eq!(g.consume(), want, "{f:?}");
+        }
+    }
 
     #[test]
     fn test_write_string_rust() {
