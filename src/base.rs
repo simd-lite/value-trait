@@ -32,7 +32,10 @@ pub trait ValueAsScalar {
     #[inline]
     #[must_use]
     fn as_i128(&self) -> Option<i128> {
-        self.as_i64().map(Into::into)
+        // every u64 fits in an i128, including the ones above `i64::MAX`
+        self.as_i64()
+            .map(Into::into)
+            .or_else(|| self.as_u64().map(Into::into))
     }
 
     /// Tries to represent the value as an i64
