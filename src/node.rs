@@ -312,3 +312,35 @@ impl PartialEq for StaticNode {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::StaticNode;
+    use crate::base::ValueAsScalar;
+
+    #[test]
+    fn as_i128_covers_every_integer() {
+        // u64 values above i64::MAX fit in an i128 as well
+        assert_eq!(
+            StaticNode::U64(u64::MAX).as_i128(),
+            Some(i128::from(u64::MAX))
+        );
+        assert_eq!(
+            StaticNode::U64(1 << 63).as_i128(),
+            Some(i128::from(1_u64 << 63))
+        );
+        assert_eq!(StaticNode::U64(7).as_i128(), Some(7));
+        assert_eq!(
+            StaticNode::I64(i64::MIN).as_i128(),
+            Some(i128::from(i64::MIN))
+        );
+        assert_eq!(StaticNode::F64(1.0).as_i128(), None);
+        assert_eq!(StaticNode::Null.as_i128(), None);
+        // and as_u128 (already right) still matches
+        assert_eq!(
+            StaticNode::U64(u64::MAX).as_u128(),
+            Some(u128::from(u64::MAX))
+        );
+        assert_eq!(StaticNode::I64(-1).as_u128(), None);
+    }
+}
