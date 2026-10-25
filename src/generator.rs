@@ -166,6 +166,10 @@ pub trait BaseGenerator {
     /// if the write fails
     #[inline]
     fn write_float(&mut self, num: f64) -> io::Result<()> {
+        // JSON has no NaN or infinity; write `null` like serde_json does.
+        if !num.is_finite() {
+            return self.write(b"null");
+        }
         let mut buffer = ryu::Buffer::new();
         let s = buffer.format_finite(num);
         self.get_writer().write_all(s.as_bytes())
@@ -893,5 +897,14 @@ mod tests {
         let mut string = "Hello, \"World!\"".as_bytes();
         super::write_string_rust(&mut writer, &mut string).expect("failed to write string");
         assert_eq!(writer, "Hello, \\\"World!\\\"".as_bytes());
+    }
+    #[test]
+    fn test_write_float_non_finite_is_null() {
+        use super::BaseGenerator;
+        for f in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            let mut g = super::DumpGenerator::new();
+            g.write_float(f).expect("failed to write float");
+            assert_eq!(g.consume(), "null", "{f}");
+        }
     }
 }
